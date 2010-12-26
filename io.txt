@@ -1,0 +1,29 @@
+P40/AN0
+P41/AN1
+P42/AN2
+P41/An3
+
+
+PE4
+PE5
+PE6
+PE7
+
+PO5
+
+PD0-7
+PE0
+PE1
+
+
+REACHABLE:
+P21
+PA1
+PA0
+PA2
+PE2
+PE3
+
+USED:
+PC2 - pcd-cs
+P51 - lcd-rs
