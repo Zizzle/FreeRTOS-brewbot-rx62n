@@ -41,6 +41,7 @@ Includes   <System Includes> , "Project Includes"
 ******************************************************************************/
 #include "iodefine.h"
 #include "yrdkrx62ndef.h"
+#include "brewbot.h"
 // #include "lcd.h" Uncomment this if an LCD is present.
 
 /******************************************************************************
@@ -124,6 +125,16 @@ void HardwareSetup(void)
 	LED14 = LED_OFF;
 	LED15 = LED_OFF;
 
+    MOTOR_CRANE_X = 1;
+
+	LED13_DDR = 1; // motor dir
+	LED7_DDR  = 1; // crane x motor relay
+	LED8_DDR  = 1; // ssr
+
+	LED14_DDR = 1;
+
+	LED14 = 0;
+/*
 	LED4_DDR = 1;
 	LED5_DDR = 1;
 	LED6_DDR = 1;
@@ -131,11 +142,14 @@ void HardwareSetup(void)
 	LED8_DDR = 1;
 	LED9_DDR = 1;
 	LED10_DDR = 1;
-	LED11_DDR = 1;
+*/
+//	LED11_DDR = 1;
+/*
 	LED12_DDR = 1;
-	LED13_DDR = 1;
+
 	LED14_DDR = 1;
 	LED15_DDR = 1;
+*/
 
 	/* Configure push button switches */
 	SW1_DDR = 0;

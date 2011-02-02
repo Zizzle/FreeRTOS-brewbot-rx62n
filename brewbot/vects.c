@@ -448,7 +448,7 @@ const fp RelocatableVectors[] RVECT_SECT  = {
 //;0x02B4  Reserved
     (fp)0,
 //;0x02B8  TMR0_CMI0A
-    (fp)vT0_1_ISR_Handler,
+    (fp)0,//vT0_1_ISR_Handler,
 //;0x02BC  TMR0_CMI0B
     (fp)INT_Excep_TMR0_CMI0B,
 //;0x02C0  TMR0_OV0I
@@ -460,7 +460,7 @@ const fp RelocatableVectors[] RVECT_SECT  = {
 //;0x02CC  TMR1_OV1I
     (fp)INT_Excep_TMR1_OV1I,
 //;0x02D0 TMR2_CMI2A
-    (fp)vT2_3_ISR_Handler,
+    (fp)0,//vT2_3_ISR_Handler,
 //;0x02D4  TMR2_CMI2B
     (fp)INT_Excep_TMR2_CMI2B,
 //;0x02D8  TMR2_OV2I

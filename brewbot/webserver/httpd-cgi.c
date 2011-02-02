@@ -185,7 +185,7 @@ static unsigned short generate_rtos_stats( void *arg )
 {
 	( void ) arg;
 	lRefreshCount++;
-	sprintf( cCountBuf, "<p><br>Refresh count = %d<p><br>%s", ( int ) lRefreshCount, pcGetTaskStatusMessage() );
+	sprintf( cCountBuf, "<p><br>Refresh count = %d<p><br>%s", ( int ) lRefreshCount, "???" ); //pcGetTaskStatusMessage() );
 	vTaskList( uip_appdata );
 	strcat( uip_appdata, cCountBuf );
 

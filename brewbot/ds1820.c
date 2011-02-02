@@ -29,7 +29,7 @@ void ds1820_get_temerature()
 //    snprintf(foo, sizeof(foo), "Temp %.2f");
 }
 
-#define delayUs(x) delay(x * 18)
+#define delayUs(x) delay((x) * 18)
 
 void delay(int i)
 {
@@ -171,6 +171,44 @@ static void ds1820Task( void *pvParameters )
 	    snprintf(foo, sizeof(foo), "Temp %d . %d  ", ds1820_temperature, ii++);
 	    lcd_string(0, 6, foo);
 	}
+
+#if 0
+	servo_set_pos(0, (ii % 2 == 0) ? 0 : 180);
+	servo_set_pos(1, (ii % 3 == 0) ? 0 : 180);
+	servo_set_pos(2, (ii % 4 == 0) ? 0 : 180);
+
+	if ((ii % 2) == 0)
+	{
+	LED4 = LED_OFF;
+	LED5 = LED_OFF;
+	LED6 = LED_OFF;
+	LED7 = LED_OFF;
+	LED8 = LED_OFF;
+	LED9 = LED_OFF;
+	LED10 = LED_OFF;
+	LED11 = LED_OFF;
+	LED12 = LED_OFF;
+	LED13 = LED_OFF;
+
+	LED14 = LED_OFF;
+	LED15 = LED_OFF;
+	}
+	else
+	{
+	LED4 = LED_ON;
+	LED5 = LED_ON;
+	LED6 = LED_ON;
+	LED7 = LED_ON;
+	LED8 = LED_ON;
+	LED9 = LED_ON;
+	LED10 = LED_ON;
+	LED11 = LED_ON;
+	LED12 = LED_ON;
+	LED13 = LED_ON;
+	LED14 = LED_ON;
+	LED15 = LED_ON;
+	}
+#endif
     }    
 }
 
@@ -188,6 +226,50 @@ PORTE.DDR.BIT.B5 = 1;
 }
 #endif
 
+
+#if 0
+  PORTE.DDR.BIT.B7 = 1;
+
+/*
+  while (1)
+{
+	 PORTE.DR.BIT.B7 = 1;
+         delayUs(100);
+	 PORTE.DR.BIT.B7 = 0;
+	delayUs(100);
+}
+*/
+
+
+  int ii = 0;
+  int jj = 0;
+
+  while (1)
+  {
+      for (jj = 0; jj < 10; jj++)
+      {
+	  int amt = ii * 100 + 500;
+
+	  PORTE.DR.BIT.B7 = 1;
+
+	  delayUs(amt);
+	  PORTE.DR.BIT.B7 = 0;
+	  delayUs(20000 - amt);
+      }
+
+//      if (ii == 10)
+//	  ii = 0;
+//      else ii = 10;
+
+      ii++;
+
+      if (ii >= 20) ii = 0;
+
+  }
+
+
+
+#endif
 
     xTaskCreate( ds1820Task,
 		 ( signed char * ) "DS1820",

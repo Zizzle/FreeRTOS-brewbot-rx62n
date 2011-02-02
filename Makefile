@@ -8,23 +8,10 @@ CFLAGS = \
 	-I brewbot/Common/ethernet/FreeTCPIP \
 	-I Source/include \
 	-I Source/portable/GCC/RX600 \
-	-DINCLUDE_HIGH_FREQUENCY_TIMER_TEST=1 \
 	$(END)
 
 
 CFILES_ENET = \
-	brewbot/Common/Minimal/flash.c \
-	brewbot/Common/Minimal/BlockQ.c \
-	brewbot/Common/Minimal/GenQTest.c \
-	brewbot/Common/Minimal/IntQueue.c \
-	brewbot/Common/Minimal/PollQ.c \
-	brewbot/Common/Minimal/QPeek.c \
-	brewbot/Common/Minimal/blocktim.c \
-	brewbot/Common/Minimal/death.c \
-	brewbot/Common/Minimal/flop.c \
-	brewbot/Common/Minimal/integer.c \
-	brewbot/Common/Minimal/recmutex.c \
-	brewbot/Common/Minimal/semtest.c \
 	brewbot/GNU-Files/start.asm \
 	brewbot/Common/ethernet/FreeTCPIP/apps/httpd/http-strings.c \
 	brewbot/Common/ethernet/FreeTCPIP/apps/httpd/httpd-fs.c \
@@ -35,8 +22,7 @@ CFILES_ENET = \
 	brewbot/Common/ethernet/FreeTCPIP/uip_arp.c \
 	brewbot/GNU-Files/hwinit.c \
 	brewbot/GNU-Files/inthandler.c \
-	brewbot/HighFrequencyTimerTest.c \
-	brewbot/IntQueueTimer.c \
+	brewbot/hop_droppers.c \
 	brewbot/ParTest.c \
 	brewbot/Renesas-Files/hwsetup.c \
 	brewbot/main-full.c \
