@@ -23,7 +23,6 @@ CFILES_ENET = \
 	brewbot/GNU-Files/hwinit.c \
 	brewbot/GNU-Files/inthandler.c \
 	brewbot/hop_droppers.c \
-	brewbot/ParTest.c \
 	brewbot/Renesas-Files/hwsetup.c \
 	brewbot/main-full.c \
 	brewbot/uIP_Task.c \
@@ -39,6 +38,7 @@ CFILES_ENET = \
 	Source/queue.c \
 	Source/tasks.c \
 	brewbot/crane-x.c \
+	brewbot/buttons.c \
 	brewbot/ds1820.c
 
 CFILES = \

@@ -208,6 +208,7 @@ unsigned long	ulString;
 
 static unsigned short generate_io_state( void *arg )
 {
+#if 0
 	extern long lParTestGetLEDState( unsigned long ulLED );
 	( void ) arg;
 
@@ -220,7 +221,8 @@ static unsigned short generate_io_state( void *arg )
 	{
 		pcStatus = "";
 	}
-
+#endif
+	pcStatus = "?";
 	sprintf( uip_appdata, "<input type=\"checkbox\" name=\"LED0\" value=\"1\" %s>LED<p><p>", pcStatus );
 
 	return strlen( uip_appdata );

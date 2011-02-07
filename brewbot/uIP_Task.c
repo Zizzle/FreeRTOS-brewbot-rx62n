@@ -241,6 +241,7 @@ struct uip_eth_addr xAddr;
 
 void vApplicationProcessFormInput( char *pcInputString )
 {
+#if 0
 char *c;
 
 	/* Process the form input sent by the IO page of the served HTML. */
@@ -266,5 +267,6 @@ char *c;
 			vParTestSetLED( 10, 0 );
 		}
     }
+#endif
 }
 

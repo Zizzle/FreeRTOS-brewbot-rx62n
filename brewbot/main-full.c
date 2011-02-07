@@ -72,11 +72,7 @@ extern void HardwareSetup( void );
 	here. */
 	HardwareSetup();
 
-	/* Turn all LEDs off. */
-	vParTestInitialise();
-
 	lcd_open();
-
 	lcd_set_address(0, 0);
 
 	lcd_string(2,0, "Welcome to brewbot");
@@ -95,6 +91,7 @@ extern void HardwareSetup( void );
 
 	startDS1820Task();
 	startLimitSwitchTask();
+	startButtonsTask();
 
 	vSetupHighFrequencyTimer();
 

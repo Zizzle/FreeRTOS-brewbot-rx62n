@@ -1,5 +1,6 @@
 #include "FreeRTOS.h"
 #include "iodefine.h"
+#include "brewbot.h"
 
 #define timerINTERRUPT_FREQUENCY		( 20000UL )
 #define timerHIGHEST_PRIORITY			( 15 )
@@ -34,20 +35,18 @@ void vTimer2_ISR_Handler( void )
     if (servoPwmCount >= 400)
 	servoPwmCount = 0;
 
-
-    PORTE.DR.BIT.B7 = (servoPos[0] > servoPwmCount);
-    PORTE.DR.BIT.B5 = (servoPos[1] > servoPwmCount);
-    PORTE.DR.BIT.B4 = (servoPos[2] > servoPwmCount);
+    HOP_DROPPER_1 = (servoPos[0] > servoPwmCount);
+    HOP_DROPPER_2 = (servoPos[1] > servoPwmCount);
+    HOP_DROPPER_3 = (servoPos[2] > servoPwmCount);
 }
 
 /*-----------------------------------------------------------*/
 
 void vSetupHighFrequencyTimer( void )
 {
-    PORTE.DDR.BIT.B7 = 1; // servo 0
-    PORTE.DDR.BIT.B5 = 1; // servo 1
-    PORTE.DDR.BIT.B4 = 1; // servo 2
-
+    HOP_DROPPER_1_DDR = 1;
+    HOP_DROPPER_2_DDR = 1;
+    HOP_DROPPER_3_DDR = 1;
 
 	MSTP( CMT2 ) = 0;
 	
@@ -68,10 +67,3 @@ void vSetupHighFrequencyTimer( void )
 	/* Start the timers. */
 	CMT.CMSTR1.BIT.STR2 = 1;
 }
-
-
-
-
-
-
-

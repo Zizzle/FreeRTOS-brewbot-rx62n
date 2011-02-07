@@ -110,46 +110,9 @@ void HardwareSetup(void)
 	PORTB.ICR.BIT.B3 = 1;       // RMII_RX_ER
 	PORTB.ICR.BIT.B7 = 1;       // RMII_CRS_DV
 
-
-	/* Configure LEDs */
-	LED4 = LED_OFF;
-	LED5 = LED_OFF;
-	LED6 = LED_OFF;
-	LED7 = LED_OFF;
-	LED8 = LED_OFF;
-	LED9 = LED_OFF;
-	LED10 = LED_OFF;
-	LED11 = LED_OFF;
-	LED12 = LED_OFF;
-	LED13 = LED_OFF;
-	LED14 = LED_OFF;
-	LED15 = LED_OFF;
-
-    MOTOR_CRANE_X = 1;
-
-	LED13_DDR = 1; // motor dir
-	LED7_DDR  = 1; // crane x motor relay
-	LED8_DDR  = 1; // ssr
-
-	LED14_DDR = 1;
-
-	LED14 = 0;
-/*
-	LED4_DDR = 1;
-	LED5_DDR = 1;
-	LED6_DDR = 1;
-	LED7_DDR = 1;
-	LED8_DDR = 1;
-	LED9_DDR = 1;
-	LED10_DDR = 1;
-*/
-//	LED11_DDR = 1;
-/*
-	LED12_DDR = 1;
-
-	LED14_DDR = 1;
-	LED15_DDR = 1;
-*/
+	// start with all inputs and let each driver task set outputs as needed
+	PORTD.DDR.BYTE = 0x0;
+	PORTE.DDR.BYTE = 0x0;
 
 	/* Configure push button switches */
 	SW1_DDR = 0;

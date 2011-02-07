@@ -6,13 +6,11 @@
 #include "lcd.h"
 #include <stdio.h>
 
-#define DQ1 PORTE.DR.BIT.B6 = 1
-#define DQ0 PORTE.DR.BIT.B6 = 0
-
-#define DQ_READ PORTE.PORT.BIT.B6
-
-#define DQ_DIR_IN  PORTE.DDR.BIT.B6 = 0
-#define DQ_DIR_OUT PORTE.DDR.BIT.B6 = 1
+#define DQ1        PORT4.DR.BIT.B0 = 1
+#define DQ0        PORT4.DR.BIT.B0 = 0
+#define DQ_READ    PORT4.PORT.BIT.B0
+#define DQ_DIR_IN  PORT4.DDR.BIT.B0 = 0
+#define DQ_DIR_OUT PORT4.DDR.BIT.B0 = 1
 
 static int     ds1820_temperature=0;
 static int     ds1820_fahrenheit =0;
@@ -171,106 +169,11 @@ static void ds1820Task( void *pvParameters )
 	    snprintf(foo, sizeof(foo), "Temp %d . %d  ", ds1820_temperature, ii++);
 	    lcd_string(0, 6, foo);
 	}
-
-#if 0
-	servo_set_pos(0, (ii % 2 == 0) ? 0 : 180);
-	servo_set_pos(1, (ii % 3 == 0) ? 0 : 180);
-	servo_set_pos(2, (ii % 4 == 0) ? 0 : 180);
-
-	if ((ii % 2) == 0)
-	{
-	LED4 = LED_OFF;
-	LED5 = LED_OFF;
-	LED6 = LED_OFF;
-	LED7 = LED_OFF;
-	LED8 = LED_OFF;
-	LED9 = LED_OFF;
-	LED10 = LED_OFF;
-	LED11 = LED_OFF;
-	LED12 = LED_OFF;
-	LED13 = LED_OFF;
-
-	LED14 = LED_OFF;
-	LED15 = LED_OFF;
-	}
-	else
-	{
-	LED4 = LED_ON;
-	LED5 = LED_ON;
-	LED6 = LED_ON;
-	LED7 = LED_ON;
-	LED8 = LED_ON;
-	LED9 = LED_ON;
-	LED10 = LED_ON;
-	LED11 = LED_ON;
-	LED12 = LED_ON;
-	LED13 = LED_ON;
-	LED14 = LED_ON;
-	LED15 = LED_ON;
-	}
-#endif
     }    
 }
 
 void startDS1820Task()
 {
-#if 0
-PORTE.DDR.BIT.B5 = 1;
-
-  while (1)
-{
-	 PORTE.DR.BIT.B5 = 1;
-         delayUs(10);
-	 PORTE.DR.BIT.B5 = 0;
-	delayUs(10);
-}
-#endif
-
-
-#if 0
-  PORTE.DDR.BIT.B7 = 1;
-
-/*
-  while (1)
-{
-	 PORTE.DR.BIT.B7 = 1;
-         delayUs(100);
-	 PORTE.DR.BIT.B7 = 0;
-	delayUs(100);
-}
-*/
-
-
-  int ii = 0;
-  int jj = 0;
-
-  while (1)
-  {
-      for (jj = 0; jj < 10; jj++)
-      {
-	  int amt = ii * 100 + 500;
-
-	  PORTE.DR.BIT.B7 = 1;
-
-	  delayUs(amt);
-	  PORTE.DR.BIT.B7 = 0;
-	  delayUs(20000 - amt);
-      }
-
-//      if (ii == 10)
-//	  ii = 0;
-//      else ii = 10;
-
-      ii++;
-
-      if (ii >= 20) ii = 0;
-
-  }
-
-
-
-#endif
-
     xTaskCreate( ds1820Task,
 		 ( signed char * ) "DS1820",
 		 configMINIMAL_STACK_SIZE + 100, NULL,
