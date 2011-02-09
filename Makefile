@@ -38,6 +38,7 @@ CFILES_ENET = \
 	Source/queue.c \
 	Source/tasks.c \
 	brewbot/crane-x.c \
+	brewbot/mash.c \
 	brewbot/buttons.c \
 	brewbot/ds1820.c
 

@@ -2,6 +2,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "lcd.h"
+#include "mash.h"
 
 /* Priorities at which the tasks are created. */
 #define mainCHECK_TASK_PRIORITY		( configMAX_PRIORITIES - 1 )
@@ -92,6 +93,7 @@ extern void HardwareSetup( void );
 	startDS1820Task();
 	startLimitSwitchTask();
 	startButtonsTask();
+	startMashTask();
 
 	vSetupHighFrequencyTimer();
 

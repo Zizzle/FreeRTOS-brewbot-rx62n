@@ -19,12 +19,13 @@ static portTickType ds1820_last_read_time;
 
 float temper;
 
-void ds1820_get_temerature()
+float ds1820_get_temperature()
 {
 //    char foo[200];
 //    temper = 1.0;
 
 //    snprintf(foo, sizeof(foo), "Temp %.2f");
+    return ((float)ds1820_temperature) / 100;
 }
 
 #define delayUs(x) delay((x) * 18)
@@ -152,6 +153,13 @@ static void ds1820Task( void *pvParameters )
     int ii =0;
     for(;;)
     {
+	PORT4.DR.BIT.B1 = 1;
+	PORT4.DR.BIT.B2 = 1;
+	PORT4.DR.BIT.B3 = 1;
+	PORT4.DDR.BIT.B1 = 1;
+	PORT4.DDR.BIT.B1 = 1;
+	PORT4.DDR.BIT.B1 = 1;
+
 	vTaskEnterCritical();
 	DS1820Init();
         DS1820Skip();
