@@ -30,7 +30,6 @@ static void allOff()
     SSR_DDR = 1;
 }
 
-
 static void display_status()
 {
 //    snprintf(message, sizeof(message), "mash: %d duty %d",

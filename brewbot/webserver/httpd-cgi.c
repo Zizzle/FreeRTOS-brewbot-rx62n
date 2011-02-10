@@ -1,9 +1,4 @@
 /**
- * \addtogroup httpd
- * @{
- */
-
-/**
  * \file
  *         Web server script interface
  * \author
@@ -275,5 +270,3 @@ static PT_THREAD( led_io ( struct httpd_state *s, char *ptr ) )
 	PSOCK_GENERATOR_SEND( &s->sout, generate_io_state, NULL );
 	PSOCK_END( &s->sout );
 }
-
-/** @} */

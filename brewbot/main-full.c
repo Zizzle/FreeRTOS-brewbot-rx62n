@@ -6,6 +6,8 @@
 #include "ds1820.h"
 #include "buttons.h"
 #include "crane.h"
+#include "menu.h"
+#include "diagnostics.h"
 
 /* Priorities at which the tasks are created. */
 #define mainCHECK_TASK_PRIORITY		( configMAX_PRIORITIES - 1 )
@@ -68,49 +70,64 @@ extern void vSetupHighFrequencyTimer( void );
 
 /*-----------------------------------------------------------*/
 
+struct menu main_menu[] =
+{
+//    {"Settings",          settings_menu, settings_display, NULL},
+//    {"Brew Start",        NULL,          brew,             brew_key_handler},
+//    {"Brew Resume",       NULL,          brew_resume,      brew_resume_key},
+//    {"Clean up",          foo_menu,      NULL,             NULL},
+    {"Diagnostics",       diag_menu,     NULL,             NULL},
+    {"Test 123",          NULL,          NULL,             NULL},
+    {"Blah Blah",         NULL,          NULL,             NULL},
+    {NULL, NULL, NULL, NULL}
+};
+
+
 /*-----------------------------------------------------------*/
 
 int main(void)
 {
-extern void HardwareSetup( void );
+    extern void HardwareSetup( void );
 
-	/* Renesas provided CPU configuration routine.  The clocks are configured in
-	here. */
-	HardwareSetup();
+    /* Renesas provided CPU configuration routine.  The clocks are configured in
+       here. */
+    HardwareSetup();
 
-	lcd_open();
-	lcd_set_address(0, 0);
+    lcd_open();
+    lcd_set_address(0, 0);
 
-	lcd_string(2,0, "Welcome to brewbot");
-	lcd_string(5,0, "IP: ");
-	lcd_display_number(configIP_ADDR0);
-	lcd_display_char('.');
-	lcd_display_number(configIP_ADDR1);
-	lcd_display_char('.');
-	lcd_display_number(configIP_ADDR2);
-	lcd_display_char('.');
-	lcd_display_number(configIP_ADDR3);
+    lcd_string(2,0, "Welcome to brewbot");
+    lcd_string(5,0, "IP: ");
+    lcd_display_number(configIP_ADDR0);
+    lcd_display_char('.');
+    lcd_display_number(configIP_ADDR1);
+    lcd_display_char('.');
+    lcd_display_number(configIP_ADDR2);
+    lcd_display_char('.');
+    lcd_display_number(configIP_ADDR3);
 
-	/* The web server task. */
-	xTaskCreate( vuIP_Task, ( signed char * ) "uIP", mainuIP_STACK_SIZE, NULL, mainuIP_TASK_PRIORITY, NULL );
+    /* The web server task. */
+    xTaskCreate( vuIP_Task, ( signed char * ) "uIP", mainuIP_STACK_SIZE, NULL, mainuIP_TASK_PRIORITY, NULL );
 
 
-	startDS1820Task();
-	startCraneLimitSwitchTask();
-	startButtonsTask();
-	startMashTask();
+    menu_set_root(main_menu);
 
-	vSetupHighFrequencyTimer();
+//    startDS1820Task();
+//    startCraneLimitSwitchTask();
+    startButtonsTask();
+//    startMashTask();
 
-	/* Start the tasks running. */
-	vTaskStartScheduler();
+    vSetupHighFrequencyTimer();
 
-	/* If all is well we will never reach here as the scheduler will now be
-	running.  If we do reach here then it is likely that there was insufficient
-	heap available for the idle task to be created. */
-	for( ;; );
+    /* Start the tasks running. */
+    vTaskStartScheduler();
+
+    /* If all is well we will never reach here as the scheduler will now be
+       running.  If we do reach here then it is likely that there was insufficient
+       heap available for the idle task to be created. */
+    for( ;; );
 	
-	return 0;
+    return 0;
 }
 /*-----------------------------------------------------------*/
 

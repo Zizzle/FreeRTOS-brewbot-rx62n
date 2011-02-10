@@ -1,54 +1,22 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "brewbot.h"
-#include "crane.h"
-#include "mash.h"
 #include "lcd.h"
+#include "menu.h"
+#include "buttons.h"
 
-static char lastU = 1;
-static char lastD = 1;
-static char lastL = 1;
-static char lastR = 1;
-
-static float target = 66.0f;
-static int duty = 50;
-
-static void buttonUp()
+static void buttonChanged(unsigned char key)
 {
-//    craneMove(DIRECTION_UP);
-    target += 0.5;
-    setMashTargetTemperature(target);
-}
-
-static void buttonDown()
-{
-    target -= 0.5;
-    setMashTargetTemperature(target);
-//    craneMove(DIRECTION_DOWN);
-}
-
-static void buttonLeft()
-{
-//    craneMove(DIRECTION_LEFT);
-    if (duty <= 10)
-	duty--;
-    else
-	duty -= 10;
-    setMashDutyCycle(duty);
-}
-
-static void buttonRight()
-{
-//    craneMove(DIRECTION_RIGHT);
-    if (duty < 10)
-	duty++;
-    else
-	duty += 10;
-    setMashDutyCycle(duty);
+    menu_key(key);
 }
 
 static void buttonsCheckTask( void *pvParameters )
 {
+    uint8_t now  = 0;
+    uint8_t last = 0;
+    uint8_t changed;
+    int ii;
+
     for(;;)
     {
 	PORTE.DDR.BYTE = 0;
@@ -75,28 +43,29 @@ static void buttonsCheckTask( void *pvParameters )
 	MOTOR_CRANE_X = BUTTON_RIGHT;
 	MOTOR_CRANE_Y = BUTTON_LEFT;
 #endif
-	if (BUTTON_UP    == 0 && BUTTON_UP    != lastU)
-	    buttonUp();
-	if (BUTTON_DOWN  == 0 && BUTTON_DOWN  != lastD)
-	    buttonDown();
-	if (BUTTON_LEFT  == 0 && BUTTON_LEFT  != lastL)
-	    buttonLeft();
-	if (BUTTON_RIGHT == 0 && BUTTON_RIGHT != lastR)
-	    buttonRight();
 
-	lastU = BUTTON_UP;
-	lastD = BUTTON_DOWN;
-	lastL = BUTTON_LEFT;
-	lastR = BUTTON_RIGHT;
+	// get the button inputs from the PORT register. Since they are on
+	// pull-ups, invent the result
+	now = ~(BUTTON_PORT >> 4);	
+	changed = now ^ last; // only interested in the change of state
+
+	for (ii = 0; ii < 4; ii++)
+	{
+	    uint8_t button = (1 << ii);
+	    if (changed & button)
+	    {
+		buttonChanged(button | (now & button ? KEY_PRESSED : 0));
+	    }
+	}
+	last = now;
    }
 }
 
 void startButtonsTask()
 {
     xTaskCreate( buttonsCheckTask,
-		 ( signed char * ) "Buttons",
-		 configMINIMAL_STACK_SIZE, NULL,
+		 (signed char *) "Buttons",
+		 configMINIMAL_STACK_SIZE + 300, NULL,
 		 1, ( xTaskHandle  * ) NULL );
 
-    PORTE.PORT.BIT.B4 = 1;
 }

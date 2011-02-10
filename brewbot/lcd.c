@@ -1,6 +1,12 @@
 #include "iodefine.h"
 #include "lcd.h"
 
+// lcd is 96 x 64 pixels
+// 19 x 8 chars
+
+#define CHAR_W 5
+
+
 // the A0 line is used to determine which mode the byte sent is to be interpreted in
 #define LCD_SET_COMMAND_MODE     PORT5.DR.BIT.B1 = 0
 #define LCD_SET_DATA_MODE        PORT5.DR.BIT.B1 = 1
@@ -163,4 +169,34 @@ void lcd_display_number_w_decimal(int number, int decimal_place)
     }
 }
 
+void lcd_clear(void)
+{
+    int i = 0 ;
 
+    // clear the ram
+    lcd_set_x(0);
+    lcd_set_y_page(0);
+    for (i =0 ; i < 808; i++)
+	lcd_write(0x00);
+}
+
+void lcd_text(uint8_t col, uint8_t row, const char *text)
+{
+    lcd_string(row, CHAR_W * col, text);
+}
+
+void lcd_clear_chars(uint8_t col, uint8_t row, uint8_t ww)
+{
+    int i = 0 ;
+    lcd_set_address(col * CHAR_W, row);
+    for (i =0 ; i < ww * CHAR_W; i++)
+	lcd_write(0x00);
+}
+
+void lcd_set_pixels(uint8_t col, uint8_t row, uint8_t ww)
+{
+    int i = 0 ;
+    lcd_set_address(col * CHAR_W, row);
+    for (i =0 ; i < ww * CHAR_W; i++)
+	lcd_write(0xff);
+}

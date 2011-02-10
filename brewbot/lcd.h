@@ -22,6 +22,10 @@ void lcd_display_char(char c);
 void lcd_display_number(int number);
 void lcd_display_number_w_decimal(int number, int decimal_place);
 
+void lcd_clear(void);
+void lcd_text(uint8_t col, uint8_t row, const char *text);
+void lcd_clear_chars(uint8_t col, uint8_t row, uint8_t ww);
+void lcd_set_pixels (uint8_t col, uint8_t rol, uint8_t ww);
 
 #endif /* __LCD_H */
  
