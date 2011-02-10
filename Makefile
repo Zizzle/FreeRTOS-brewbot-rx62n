@@ -40,7 +40,7 @@ CFILES_ENET = \
 	brewbot/crane.c \
 	brewbot/menu.c \
 	brewbot/diagnostics.c \
-	brewbot/mash.c \
+	brewbot/heat.c \
 	brewbot/buttons.c \
 	brewbot/ds1820.c
 

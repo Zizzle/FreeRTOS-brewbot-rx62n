@@ -7,12 +7,16 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef MASH_H
-#define MASH_H
+#ifndef HEAT_H
+#define HEAT_H
 
-void setMashTargetTemperature(float target);
-void setMashDutyCycle(int duty_cycle);
+void setHeatTargetTemperature(float target);
+void setHeatDutyCycle(int duty_cycle);
 
-void startMashTask();
+float getHeatTargetTemperature();
+int   getHeatDutyCycle();
+
+void startHeatTask();
+void stopHeatTask();
 
 #endif

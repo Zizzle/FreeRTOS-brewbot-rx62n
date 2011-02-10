@@ -8,52 +8,54 @@
 ///////////////////////////////////////////////////////////////////////////////
 #include <stdlib.h>
 #include "menu.h"
-#include "mash.h"
+#include "heat.h"
 #include "buttons.h"
 
-static float mash_target = 66.0f;
-static int   mash_duty   = 50;
+static float heat_target = 66.0f;
+static int   heat_duty   = 50;
 
-static void diag_mash()
+static void diag_heat()
 {
-    
+    setHeatTargetTemperature(heat_target);
+    setHeatDutyCycle(heat_duty);
+    startHeatTask();
 }
 
-static int diag_mash_key(unsigned char key)
+static int diag_heat_key(unsigned char key)
 {
     if (key & KEY_PRESSED)
     {
 	if (key & KEY_UP)
 	{
-	    mash_target += 0.5;
+	    heat_target += 0.5;
 	}
 	else if (key & KEY_DOWN)
 	{
-	    mash_target -= 0.5;
+	    heat_target -= 0.5;
 	}
 	else if (key & KEY_LEFT)
 	{
-	    if (mash_duty <= 10)
-		mash_duty--;
+	    if (heat_duty <= 10)
+		heat_duty--;
 	    else
-		mash_duty -= 10;
+		heat_duty -= 10;
 	}
 	else if (key & KEY_RIGHT)
 	{
-	    if (mash_duty < 10)
-		mash_duty++;
+	    if (heat_duty < 10)
+		heat_duty++;
 	    else
-		mash_duty += 10;
+		heat_duty += 10;
 	}
-	setMashTargetTemperature(mash_target);
-	setMashDutyCycle(mash_duty);
+	setHeatTargetTemperature(heat_target);
+	setHeatDutyCycle(heat_duty);
     }
     return 1; // signal that we consume the left key, double click needed to exit
 }
 
 struct menu diag_menu[] =
  {
-     {"Mash",           NULL,                diag_mash,  diag_mash_key},
+     {"Heat",           NULL,                diag_heat,  diag_heat_key},
 #if 0
     {"Heat basic",      diag_heat_basic,     NULL,       diag_key},
     {"Level sensors",   NULL,                diag_adc,   diag_key},

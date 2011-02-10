@@ -95,12 +95,10 @@ static void menu_applet_key(unsigned char key)
     int consumed = g_menu_applet(key);
     static portTickType lastLeft = 0;
 
-    // todo check for double click
-
     if (key & KEY_LEFT && key & KEY_PRESSED)
     {
 	if (consumed == 0 || 
-	    (lastLeft != 0 && xTaskGetTickCount() - lastLeft > 100))
+	    (lastLeft != 0 && xTaskGetTickCount() - lastLeft < 100)) // double click?
 	{
 	    menu_clear();
 	    menu_update();

@@ -11,7 +11,10 @@
 #define DS1820_H
 
 float ds1820_get_temperature();
-void startDS1820Task();
 
+void DS1820Skip(void);
+void DS1820Convert (void);
+void DS1820Init (void);
+void DS1820ReadTemp(void);
 
 #endif

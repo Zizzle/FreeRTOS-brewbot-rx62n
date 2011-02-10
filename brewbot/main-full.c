@@ -2,7 +2,6 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "lcd.h"
-#include "mash.h"
 #include "ds1820.h"
 #include "buttons.h"
 #include "crane.h"
@@ -112,10 +111,8 @@ int main(void)
 
     menu_set_root(main_menu);
 
-//    startDS1820Task();
 //    startCraneLimitSwitchTask();
     startButtonsTask();
-//    startMashTask();
 
     vSetupHighFrequencyTimer();
 

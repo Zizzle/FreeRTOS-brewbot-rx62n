@@ -11,14 +11,15 @@ static void display_status();
 
 static volatile float mash_target = 0.0f;
 static volatile int   mash_duty_cycle = 50;
+static xTaskHandle    mashTaskHandle;
 
-void setMashTargetTemperature(float target)
+void setHeatTargetTemperature(float target)
 {
     mash_target = target;
     display_status();
 }
 
-void setMashDutyCycle(int duty_cycle)
+void setHeatDutyCycle(int duty_cycle)
 {
     mash_duty_cycle = duty_cycle;
     display_status();
@@ -35,7 +36,7 @@ static void display_status()
 //    snprintf(message, sizeof(message), "mash: %d duty %d",
 //	     (int) (mash_target * 100), mash_duty_cycle);
 //    lcd_string(6,0, message);
-    lcd_string(6,0, "mash: ");
+    lcd_text(8, 0, "Heating");
     lcd_display_number((int) (mash_target * 100));
     lcd_display_char(' ');
     lcd_display_number(mash_duty_cycle);
@@ -52,6 +53,14 @@ static void mashTask( void *pvParameters )
     {
 	display_status();
 
+	// kick off reading the temp
+	vTaskEnterCritical();
+	DS1820Init();
+        DS1820Skip();
+        DS1820Convert();
+	vTaskExitCritical();
+
+	// 1 second delay, run heat according to the duty cycle
 	for (ii = 0; ii < 100; ii++)
 	{
 	    if (ds1820_get_temperature() < mash_target && ii <= mash_duty_cycle)
@@ -64,13 +73,22 @@ static void mashTask( void *pvParameters )
 	    }
 	    vTaskDelay(10); // wait for the conversion to happen
 	}
+
+	vTaskEnterCritical();
+	DS1820ReadTemp();
+	vTaskExitCritical();
     }   
 }
 
-void startMashTask()
+void startHeatTask()
 {
     xTaskCreate( mashTask,
-		 ( signed char * ) "MashTask",
-		 configMINIMAL_STACK_SIZE, NULL,
-		 4, ( xTaskHandle  * ) NULL );
+		 ( signed char * ) "HeatTask",
+		 configMINIMAL_STACK_SIZE + 600, NULL,
+		 4, ( xTaskHandle  * ) &mashTaskHandle );
+}
+
+void stopHeatTask()
+{
+    vTaskDelete( mashTaskHandle );
 }
