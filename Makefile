@@ -37,7 +37,7 @@ CFILES_ENET = \
 	Source/portable/MemMang/heap_2.c \
 	Source/queue.c \
 	Source/tasks.c \
-	brewbot/crane-x.c \
+	brewbot/crane.c \
 	brewbot/mash.c \
 	brewbot/buttons.c \
 	brewbot/ds1820.c

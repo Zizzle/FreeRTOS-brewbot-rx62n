@@ -3,6 +3,7 @@
 #include "brewbot.h"
 #include "crane.h"
 #include "semphr.h"
+#include "lcd.h"
 
 static int crane_direction = 0;
 static xSemaphoreHandle run;
@@ -99,7 +100,7 @@ static void limitSwitchCheckTask( void *pvParameters )
    }    
 }
 
-void startLimitSwitchTask()
+void startCraneLimitSwitchTask()
 {
     xTaskCreate( limitSwitchCheckTask,
 		 ( signed char * ) "LimitSwitch",

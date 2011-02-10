@@ -3,6 +3,9 @@
 #include "task.h"
 #include "lcd.h"
 #include "mash.h"
+#include "ds1820.h"
+#include "buttons.h"
+#include "crane.h"
 
 /* Priorities at which the tasks are created. */
 #define mainCHECK_TASK_PRIORITY		( configMAX_PRIORITIES - 1 )
@@ -61,6 +64,8 @@ void vApplicationStackOverflowHook( xTaskHandle *pxTask, signed char *pcTaskName
  */
 extern void vuIP_Task( void *pvParameters );
 
+extern void vSetupHighFrequencyTimer( void );
+
 /*-----------------------------------------------------------*/
 
 /*-----------------------------------------------------------*/
@@ -91,7 +96,7 @@ extern void HardwareSetup( void );
 
 
 	startDS1820Task();
-	startLimitSwitchTask();
+	startCraneLimitSwitchTask();
 	startButtonsTask();
 	startMashTask();
 
@@ -142,7 +147,8 @@ void vApplicationSetupTimerInterrupt( void )
 of this file. */
 void vApplicationMallocFailedHook( void )
 {
-	for( ;; );
+    lcd_string(0,0, "Malloc failed");
+    for( ;; );
 }
 /*-----------------------------------------------------------*/
 
@@ -150,7 +156,8 @@ void vApplicationMallocFailedHook( void )
 of this file. */
 void vApplicationStackOverflowHook( xTaskHandle *pxTask, signed char *pcTaskName )
 {
-	for( ;; );
+    lcd_string(0,0, "Stack Overflow");
+    for( ;; );
 }
 /*-----------------------------------------------------------*/
 

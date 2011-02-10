@@ -3,6 +3,7 @@
 #include "brewbot.h"
 #include "crane.h"
 #include "mash.h"
+#include "lcd.h"
 
 static char lastU = 1;
 static char lastD = 1;
