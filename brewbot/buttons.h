@@ -19,4 +19,11 @@ void startButtonsTask();
 
 #define KEY_PRESSED 0x10
 
+#define isKeyPressed(key, state) ((key && state) && (KEY_PRESSED & state)) 
+
+#define upKeyPressed(state)    ((KEY_UP    & state) && (KEY_PRESSED & state)) 
+#define downKeyPressed(state)  ((KEY_DOWN  & state) && (KEY_PRESSED & state)) 
+#define leftKeyPressed(state)  ((KEY_LEFT  & state) && (KEY_PRESSED & state)) 
+#define rightKeyPressed(state) ((KEY_RIGHT & state) && (KEY_PRESSED & state)) 
+
 #endif

@@ -12,7 +12,7 @@
 struct menu {
     const char *text;
     struct menu *next;
-    void (*activate)(void);
+    void (*activate)(int initializing);
     int  (*key_handler)(unsigned char key); // return non-zero if the key was consumed
 };
 

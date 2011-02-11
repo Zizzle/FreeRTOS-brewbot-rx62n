@@ -33,14 +33,16 @@ static void allOff()
 
 static void display_status()
 {
-//    snprintf(message, sizeof(message), "mash: %d duty %d",
-//	     (int) (mash_target * 100), mash_duty_cycle);
-//    lcd_string(6,0, message);
+    char message[32];
+    snprintf(message, sizeof(message), "Tar %.1f duty %d ",
+	     (double) mash_target, mash_duty_cycle);
+    lcd_text(0, 4, message);
+
+    lcd_printf(0, 5, "Temp %.2f    ",
+	     (double)ds1820_get_temperature());
+//    lcd_text(0, 5, message);
+
     lcd_text(8, 0, "Heating");
-    lcd_display_number((int) (mash_target * 100));
-    lcd_display_char(' ');
-    lcd_display_number(mash_duty_cycle);
-    lcd_display_char(' ');    
 }
 
 static void mashTask( void *pvParameters )
@@ -91,4 +93,5 @@ void startHeatTask()
 void stopHeatTask()
 {
     vTaskDelete( mashTaskHandle );
+    allOff();
 }

@@ -1,6 +1,10 @@
 #include "iodefine.h"
 #include "lcd.h"
 
+#include <stdarg.h>
+#include <stdlib.h>
+#include <stdio.h>
+
 // lcd is 96 x 64 pixels
 // 19 x 8 chars
 
@@ -199,4 +203,14 @@ void lcd_set_pixels(uint8_t col, uint8_t row, uint8_t ww)
     lcd_set_address(col * CHAR_W, row);
     for (i =0 ; i < ww * CHAR_W; i++)
 	lcd_write(0xff);
+}
+
+void lcd_printf(uint8_t col, uint8_t row, const char *fmt, ...)
+{
+    char message[21];
+    va_list ap;
+    va_start(ap, fmt);
+    vsnprintf(message, sizeof(message) - 1, fmt, ap);
+    va_end(ap);
+    lcd_text(col, row, message);
 }

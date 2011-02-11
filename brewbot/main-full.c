@@ -2,11 +2,10 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "lcd.h"
-#include "ds1820.h"
 #include "buttons.h"
-#include "crane.h"
 #include "menu.h"
 #include "diagnostics.h"
+#include "crane.h"
 
 /* Priorities at which the tasks are created. */
 #define mainCHECK_TASK_PRIORITY		( configMAX_PRIORITIES - 1 )
@@ -108,12 +107,9 @@ int main(void)
     /* The web server task. */
     xTaskCreate( vuIP_Task, ( signed char * ) "uIP", mainuIP_STACK_SIZE, NULL, mainuIP_TASK_PRIORITY, NULL );
 
-
     menu_set_root(main_menu);
-
-//    startCraneLimitSwitchTask();
-    startButtonsTask();
-
+    startButtonsTask(); // this will drive the menu system
+    startCraneTask();
     vSetupHighFrequencyTimer();
 
     /* Start the tasks running. */

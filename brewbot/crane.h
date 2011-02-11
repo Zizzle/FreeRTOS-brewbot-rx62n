@@ -19,8 +19,8 @@ enum Direction
     DIRECTION_RIGHT
 };
 
+void startCraneTask();
 void craneMove(int direction);
-void startCraneLimitSwitchTask();
-
+void craneStop();
 
 #endif

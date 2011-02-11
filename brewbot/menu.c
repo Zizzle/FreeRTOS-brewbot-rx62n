@@ -49,9 +49,9 @@ static void menu_run_callback(void)
 {
     if (g_index > 0)
     {
-        void (*callback)(void) = g_menu[g_index - 1][g_crumbs[g_index - 1]].activate;
+        void (*callback)(int) = g_menu[g_index - 1][g_crumbs[g_index - 1]].activate;
         if (callback)
-            callback();
+            callback(1);
     }
 }
 
@@ -86,24 +86,45 @@ void menu_set_root(struct menu *root_menu)
 }
 
 //
+// Go back in the menu hierachy after the left key has been pressed
+// in an applet (or double clicked)
+//
+static void menu_back_after_applet()
+{
+    void (*callback)(int) = g_menu[g_index][g_item].activate;
+    if (callback)
+	callback(0); // deactivate
+
+    menu_clear();
+    menu_update();
+    g_menu_applet = NULL;
+    menu_run_callback();
+}
+
+//
 // When the user has select an applet all the keys come here.
 // We offer the key to the applet. If the back key is pressed then
 // we disable keys coming here.
 //
 static void menu_applet_key(unsigned char key)
 {
-    int consumed = g_menu_applet(key);
     static portTickType lastLeft = 0;
 
-    if (key & KEY_LEFT && key & KEY_PRESSED)
+    if (leftKeyPressed(key) && xTaskGetTickCount() - lastLeft < 500) // double click?)
     {
-	if (consumed == 0 || 
-	    (lastLeft != 0 && xTaskGetTickCount() - lastLeft < 100)) // double click?
+	menu_back_after_applet();
+	return; // don't let the applet know about this key
+    }
+
+    // offer the key to the active applet
+    int consumed = g_menu_applet(key);
+
+    // if not consumed then got back to the menu
+    if (leftKeyPressed(key))
+    {
+	if (consumed == 0)	    
 	{
-	    menu_clear();
-	    menu_update();
-	    g_menu_applet = NULL;
-	    menu_run_callback();
+	    menu_back_after_applet();
 	}
 	else
 	{
@@ -144,7 +165,7 @@ void menu_key(unsigned char key)
     }
     else if (key & KEY_RIGHT)
     {
-        void (*callback)(void) = g_menu[g_index][g_item].activate;
+        void (*callback)(int) = g_menu[g_index][g_item].activate;
         g_crumbs[g_index] = g_item;
 
         if (g_menu[g_index][g_item].next && g_index < MAX_DEPTH)
@@ -163,7 +184,7 @@ void menu_key(unsigned char key)
         // run the callback which should start the applet or update the display
         if (callback)
         {
-            callback();
+            callback(1);
         }
     }
 }

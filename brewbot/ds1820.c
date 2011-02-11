@@ -12,7 +12,7 @@
 #define DQ_DIR_IN  PORT4.DDR.BIT.B0 = 0
 #define DQ_DIR_OUT PORT4.DDR.BIT.B0 = 1
 
-static int     ds1820_temperature=0;
+static int     ds1820_temperature=10000;
 static int     ds1820_fahrenheit =0;
 static unsigned char ds1820_error = 0;
 static portTickType ds1820_last_read_time;
