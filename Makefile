@@ -45,6 +45,7 @@ CFILES_ENET = \
 	brewbot/p5q.c \
 	brewbot/heat.c \
 	brewbot/buttons.c \
+	brewbot/settings.c \
 	brewbot/ds1820.c
 
 CFILES = \
