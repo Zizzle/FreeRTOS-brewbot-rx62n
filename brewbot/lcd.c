@@ -178,12 +178,17 @@ void lcd_set_pixels(uint8_t col, uint8_t row, uint8_t ww)
 	lcd_write(0xff);
 }
 
-void lcd_printf(uint8_t col, uint8_t row, const char *fmt, ...)
+void lcd_printf(uint8_t col, uint8_t row, uint8_t ww, const char *fmt, ...)
 {
     char message[21];
     va_list ap;
     va_start(ap, fmt);
-    vsnprintf(message, sizeof(message) - 1, fmt, ap);
+    int len = vsnprintf(message, sizeof(message) - 1, fmt, ap);
     va_end(ap);
     lcd_text(col, row, message);
+
+    while (len++ < ww)
+    {
+	lcd_display_char(' ');
+    }
 }

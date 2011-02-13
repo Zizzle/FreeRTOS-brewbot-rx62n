@@ -85,15 +85,15 @@ static void settings_display_menu()
 	struct settings_display *disp = &settings_display_list[ii + settings_offset];
 	if (disp->type == FLOAT)
 	{
-	    lcd_printf(0, 1 + ii, disp->fmt, *((float *)disp->value));
+	    lcd_printf(0, 1 + ii, 19, disp->fmt, *((float *)disp->value));
 	}
 	else if (disp->type == UINT8)
 	{
-	    lcd_printf(0, 1 + ii, disp->fmt, *((uint8_t *)disp->value));
+	    lcd_printf(0, 1 + ii, 19, disp->fmt, *((uint8_t *)disp->value));
 	}
 	if (ii + settings_offset == settings_cursor)
 	{
-	    lcd_printf(0, 1 + ii, ">");
+	    lcd_text(0, 1 + ii, ">");
 	}
     }
 }
@@ -102,7 +102,7 @@ void settings_display(int init)
 {
     if (init)
     {
-	lcd_printf(0, 0, "  Settings");
+	lcd_text(0, 0, "  Settings");
 	settings_display_menu();
     }
     else

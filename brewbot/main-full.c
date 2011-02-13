@@ -8,6 +8,7 @@
 #include "crane.h"
 #include "spi.h"
 #include "settings.h"
+#include "brew.h"
 
 /* Priorities at which the tasks are created. */
 #define mainCHECK_TASK_PRIORITY		( configMAX_PRIORITIES - 1 )
@@ -73,8 +74,8 @@ extern void vSetupHighFrequencyTimer( void );
 struct menu main_menu[] =
 {
     {"Settings",          NULL,          settings_display, settings_key_handler},
-//    {"Brew Start",        NULL,          brew,             brew_key_handler},
-//    {"Brew Resume",       NULL,          brew_resume,      brew_resume_key},
+    {"Brew Start",        NULL,          brew_start,       brew_key_handler},
+    {"Brew Resume",       NULL,          brew_resume,      brew_resume_key},
 //    {"Clean up",          foo_menu,      NULL,             NULL},
     {"Diagnostics",       diag_menu,     NULL,             NULL},
     {NULL, NULL, NULL, NULL}
@@ -95,22 +96,6 @@ int main(void)
     lcd_set_address(0, 0);
 
     settings_load();
-
-#if 0
-    while (1)
-    {
-	int i;
-
-
-	extern void read_flash_id2(uint8_t idbuf[3]);
-
-	    uint8_t id[3];
-	    read_flash_id2(id);
-
-	for (i=0;i<1000000;i++)asm("");
-	for (i=0;i<1000000;i++)asm("");
-    }
-#endif
 
     lcd_string(7,0, "IP: ");
     lcd_display_number(configIP_ADDR0);

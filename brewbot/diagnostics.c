@@ -146,6 +146,9 @@ static int diag_mash_key(unsigned char key)
 static void solenoid_pulse(int initializing)
 {
     SOLENOID_DDR = 1;
+    lcd_text(0, 1, "Solenoid diagnostic");
+    lcd_text(0, 2, "/\\ \\/ = on / off");
+    lcd_text(0, 3, "< > = Back / pulse");
 }
 
 static int solenoid_pulse_key(unsigned char key)
@@ -221,12 +224,12 @@ static void diag_levels(int initializing)
 	{
 	    uint8_t id[3];
 	    flash_read_id(id);
-	    lcd_printf(2,2, "id = %x %x %x", id[0], id[1], id[2]);
+	    lcd_printf(2,2, 16, "id = %x %x %x", id[0], id[1], id[2]);
 	}
 	{
 	    uint8_t buff[4];
 	    flash_read(0, buff,sizeof(buff));
-	    lcd_printf(2,4, "id = %x %x %x %x", buff[0], buff[1], buff[2], buff[3]);
+	    lcd_printf(2,4, 16, "id = %x %x %x %x", buff[0], buff[1], buff[2], buff[3]);
 
 	    buff[0] = 0x34;
 	    buff[1] = 0x56;

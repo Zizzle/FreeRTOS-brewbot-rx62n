@@ -38,7 +38,7 @@ static void display_status()
 	     (double) mash_target, mash_duty_cycle);
     lcd_text(0, 4, message);
 
-    lcd_printf(0, 5, "Temp %.2f    ",
+    lcd_printf(0, 5, 18, "Temp %.2f    ",
 	     (double)ds1820_get_temperature());
 //    lcd_text(0, 5, message);
 

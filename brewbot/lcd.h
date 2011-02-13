@@ -27,7 +27,7 @@ void lcd_text(uint8_t col, uint8_t row, const char *text);
 void lcd_clear_chars(uint8_t col, uint8_t row, uint8_t ww);
 void lcd_set_pixels (uint8_t col, uint8_t rol, uint8_t ww);
 
-void lcd_printf(uint8_t col, uint8_t row, const char *fmt, ...);
+void lcd_printf(uint8_t col, uint8_t row, uint8_t ww, const char *fmt, ...);
 
 #endif /* __LCD_H */
  
