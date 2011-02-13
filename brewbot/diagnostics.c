@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// Copyright (C) 2007, Matthew Pratt, All Rights Reserved.
+// Copyright (C) 2011, Matthew Pratt, licensed under the GPL3.
 //
 // Authors: Matthew Pratt
 //
@@ -16,6 +16,7 @@
 #include "hop_droppers.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "p5q.h"
 
 static float heat_target = 66.0f;
 static int   heat_duty   = 50;
@@ -217,11 +218,22 @@ static void diag_levels(int initializing)
     {
 	lcd_text(0, 1, "Level diagnostic");
 
-	extern void read_flash_id2(uint8_t idbuf[3]);
 	{
 	    uint8_t id[3];
-	    read_flash_id2(id);
+	    read_flash_id(id);
 	    lcd_printf(2,2, "id = %x %x %x", id[0], id[1], id[2]);
+	}
+	{
+	    uint8_t buff[4];
+	    read_flash(0, buff,sizeof(buff));
+	    lcd_printf(2,4, "id = %x %x %x %x", buff[0], buff[1], buff[2], buff[3]);
+
+	    buff[0] = 0x34;
+	    buff[1] = 0x56;
+	    buff[2] = 0x78;
+	    buff[3] = 0x9A;
+	    flash_write(0, buff, sizeof(buff));
+
 	}
     }
 }

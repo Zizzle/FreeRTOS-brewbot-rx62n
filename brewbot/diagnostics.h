@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// Copyright (C) 2007, Matthew Pratt, All Rights Reserved.
+// Copyright (C) 2011, Matthew Pratt, licensed under the GPL3.
 //
 // Authors: Matthew Pratt
 //

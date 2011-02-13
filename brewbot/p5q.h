@@ -3,20 +3,16 @@
 //
 // Authors: Matthew Pratt
 //
-// Date:  7 Feb 2011
+// Date: 12 Feb 2011
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef HEAT_H
-#define HEAT_H
+#ifndef P5Q_H
+#define P5Q_H
 
-void setHeatTargetTemperature(float target);
-void setHeatDutyCycle(int duty_cycle);
+void read_flash_id(uint8_t idbuf[3]);
+void read_flash(uint32_t addr, uint8_t *buffer, uint32_t byteCount);
+void flash_write(uint32_t addr, uint8_t *buffer, uint32_t byteCount);
 
-float getHeatTargetTemperature();
-int   getHeatDutyCycle();
-
-void startHeatTask();
-void stopHeatTask();
 
 #endif
