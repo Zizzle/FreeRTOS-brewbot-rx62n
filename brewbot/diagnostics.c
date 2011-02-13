@@ -217,14 +217,11 @@ static void diag_levels(int initializing)
     {
 	lcd_text(0, 1, "Level diagnostic");
 
-	extern int read_flash_id(uint8_t idbuf[3]);
-	extern uint8_t rxByte;
 	extern void read_flash_id2(uint8_t idbuf[3]);
-
 	{
 	    uint8_t id[3];
 	    read_flash_id2(id);
-	    lcd_printf(2,2, "id = %x %x %x %x", id[0], id[1], id[2], rxByte);
+	    lcd_printf(2,2, "id = %x %x %x", id[0], id[1], id[2]);
 	}
     }
 }

@@ -6,6 +6,7 @@
 #include "menu.h"
 #include "diagnostics.h"
 #include "crane.h"
+#include "spi.h"
 
 /* Priorities at which the tasks are created. */
 #define mainCHECK_TASK_PRIORITY		( configMAX_PRIORITIES - 1 )
@@ -90,6 +91,7 @@ int main(void)
        here. */
     HardwareSetup();
 
+    spi_open();
     lcd_open();
     lcd_set_address(0, 0);
 

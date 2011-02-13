@@ -191,7 +191,7 @@ const fp RelocatableVectors[] RVECT_SECT  = {
 //;0x00B0  Reserved
     (fp)0,
 //;0x00B4  Reserved
-    (fp) vRspioRx,
+    (fp)0,
 //;0x00B8  Reserved
     (fp)0,
 //;0x00BC  Reserved
