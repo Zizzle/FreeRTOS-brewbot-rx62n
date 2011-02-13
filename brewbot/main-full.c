@@ -80,7 +80,6 @@ struct menu main_menu[] =
     {NULL, NULL, NULL, NULL}
 };
 
-
 /*-----------------------------------------------------------*/
 
 int main(void)
@@ -94,8 +93,23 @@ int main(void)
     lcd_open();
     lcd_set_address(0, 0);
 
-    lcd_string(2,0, "Welcome to brewbot");
-    lcd_string(5,0, "IP: ");
+#if 0
+    while (1)
+    {
+	int i;
+
+
+	extern void read_flash_id2(uint8_t idbuf[3]);
+
+	    uint8_t id[3];
+	    read_flash_id2(id);
+
+	for (i=0;i<1000000;i++)asm("");
+	for (i=0;i<1000000;i++)asm("");
+    }
+#endif
+
+    lcd_string(7,0, "IP: ");
     lcd_display_number(configIP_ADDR0);
     lcd_display_char('.');
     lcd_display_number(configIP_ADDR1);

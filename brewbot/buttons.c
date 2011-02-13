@@ -24,6 +24,7 @@ static void buttonsCheckTask( void *pvParameters )
 
 	vTaskDelay(10);
 	
+/*
 	lcd_string(7,0, "bt: ");
 
 	lcd_display_number(BUTTON_UP);
@@ -33,6 +34,7 @@ static void buttonsCheckTask( void *pvParameters )
 	lcd_display_number(BUTTON_LEFT);
 	lcd_display_char(' ');
 	lcd_display_number(BUTTON_RIGHT);
+*/
 
 #if 0
 	MOTOR_DIR_DDR = 1;

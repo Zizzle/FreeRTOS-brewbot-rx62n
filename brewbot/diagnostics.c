@@ -13,6 +13,9 @@
 #include "brewbot.h"
 #include "lcd.h"
 #include "crane.h"
+#include "hop_droppers.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 static float heat_target = 66.0f;
 static int   heat_duty   = 50;
@@ -168,19 +171,77 @@ static int solenoid_pulse_key(unsigned char key)
     return 1;
 }
 //----------------------------------------------------------------------------
+static void diag_hops(int initializing)
+{
+    if (initializing)
+    {
+	lcd_text(0, 1, "Hops diagnostic");
+	lcd_text(0, 2, "/\\ = dropper 1");
+	lcd_text(0, 3, ">  = dropper 2");
+	lcd_text(0, 4, "\\/ = dropper 3");
+    }
+}
+
+static int diag_hops_key(unsigned char key)
+{
+    if (upKeyPressed(key))
+    {
+	servo_set_pos(0, 180);
+	vTaskDelay(1000); // wait for the hops to fall
+	servo_set_pos(0, 0);
+    }
+    else if (downKeyPressed(key))
+    {
+	servo_set_pos(1, 180);
+	vTaskDelay(1000); // wait for the hops to fall
+	servo_set_pos(1, 0);
+    }
+    else if (leftKeyPressed(key))
+    {
+	servo_set_pos(2, 180);
+	vTaskDelay(1000); // wait for the hops to fall
+	servo_set_pos(2, 0);
+
+    }
+    else if (leftKeyPressed(key))
+    {
+
+    }
+
+    return 1;
+}
+//----------------------------------------------------------------------------
+static void diag_levels(int initializing)
+{
+    if (initializing)
+    {
+	lcd_text(0, 1, "Level diagnostic");
+
+	extern int read_flash_id(uint8_t idbuf[3]);
+	extern uint8_t rxByte;
+	extern void read_flash_id2(uint8_t idbuf[3]);
+
+	{
+	    uint8_t id[3];
+	    read_flash_id2(id);
+	    lcd_printf(2,2, "id = %x %x %x %x", id[0], id[1], id[2], rxByte);
+	}
+    }
+}
+
+static int diag_level_key(unsigned char key)
+{
+    return 0;
+}
+//----------------------------------------------------------------------------
 
 struct menu diag_menu[] =
- {
+{
      {"Heat",           NULL,              diag_heat,      diag_heat_key},
      {"Crane",          NULL,              diag_crane,     diag_crane_key},
      {"Mash stirrer",   NULL,              diag_mash,      diag_mash_key},
      {"Solenoid",       NULL,              solenoid_pulse, solenoid_pulse_key},
-#if 0
-    {"Heat basic",      diag_heat_basic,     NULL,       diag_key},
-    {"Level sensors",   NULL,                diag_adc,   diag_key},
-    {"Hops",            NULL,                diag_hops,  NULL},
-#endif
-    {NULL, NULL, NULL, NULL}
+     {"Hops",           NULL,              diag_hops,      diag_hops_key},
+     {"Level sensors",  NULL,              diag_levels,    diag_level_key},
+     {NULL, NULL, NULL, NULL}
 };
-
-

@@ -23,6 +23,7 @@ extern void vT0_1_ISR_Handler( void );
 extern void vT2_3_ISR_Handler( void );
 extern void vEMAC_ISR_Handler( void );
 extern void vTimer2_ISR_Handler( void );
+void vRspioRx( void );
 
 #define FVECT_SECT          __attribute__ ((section (".fvectors")))
 
@@ -190,7 +191,7 @@ const fp RelocatableVectors[] RVECT_SECT  = {
 //;0x00B0  Reserved
     (fp)0,
 //;0x00B4  Reserved
-    (fp)0,
+    (fp) vRspioRx,
 //;0x00B8  Reserved
     (fp)0,
 //;0x00BC  Reserved

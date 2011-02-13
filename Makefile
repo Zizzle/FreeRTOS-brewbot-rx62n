@@ -4,6 +4,7 @@ CFLAGS = \
 	-I brewbot/Common/include \
 	-I brewbot/webserver \
 	-I brewbot \
+	-I brewbot/flash \
 	-I brewbot/include \
 	-I brewbot/Common/ethernet/FreeTCPIP \
 	-I Source/include \

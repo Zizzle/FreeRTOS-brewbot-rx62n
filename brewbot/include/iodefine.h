@@ -2260,7 +2260,10 @@ struct st_rspi {
             unsigned char IDLNF:1;
             unsigned char MODF:1;
             unsigned char PERF:1;
-            unsigned char :4;
+	    unsigned char :1;
+	    unsigned char SPTEF:1;
+	    unsigned char :1;
+	    unsigned char SPRF:1;
         } BIT;
     } SPSR;
     union {
