@@ -20,7 +20,7 @@
 #define SPI_FLASH_WRITE_ENABLE   0x06
 #define SPI_FLASH_WRITE_BYTES    0x22
 
-void read_flash_id(uint8_t idbuf[3])
+void flash_read_id(uint8_t idbuf[3])
 {
     uint8_t out = SPI_FLASH_INS_RDID;
     SFL_CHIP_SELECT_SET;
@@ -30,7 +30,7 @@ void read_flash_id(uint8_t idbuf[3])
 }
 
 
-void read_flash(uint32_t addr, uint8_t *buffer, uint32_t byteCount)
+void flash_read(uint32_t addr, uint8_t *buffer, uint32_t byteCount)
 {
     uint8_t command[4] =
 	{

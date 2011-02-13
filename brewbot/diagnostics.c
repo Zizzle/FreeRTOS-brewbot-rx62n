@@ -220,12 +220,12 @@ static void diag_levels(int initializing)
 
 	{
 	    uint8_t id[3];
-	    read_flash_id(id);
+	    flash_read_id(id);
 	    lcd_printf(2,2, "id = %x %x %x", id[0], id[1], id[2]);
 	}
 	{
 	    uint8_t buff[4];
-	    read_flash(0, buff,sizeof(buff));
+	    flash_read(0, buff,sizeof(buff));
 	    lcd_printf(2,4, "id = %x %x %x %x", buff[0], buff[1], buff[2], buff[3]);
 
 	    buff[0] = 0x34;
