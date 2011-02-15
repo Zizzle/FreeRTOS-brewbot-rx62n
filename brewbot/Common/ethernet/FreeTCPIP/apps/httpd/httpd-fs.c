@@ -36,6 +36,8 @@
 #include "httpd-fs.h"
 #include "httpd-fsdata.h"
 
+#include "net/psock.h"
+
 #ifndef NULL
 #define NULL	0
 #endif /* NULL */

@@ -15,6 +15,7 @@
 #include "buttons.h"
 #include "p5q.h"
 #include "lcd.h"
+#include "net/uip.h"
 
 #define SETTINGS_FLASH_ADDR 0
 #define SETTINGS_DISPLAY_SIZE 7
@@ -112,7 +113,6 @@ void settings_display(int init)
 }
 int settings_key_handler(unsigned char key)
 {
-
     if (upKeyPressed(key))
     {
 	if (settings_offset != 0 && settings_offset == settings_cursor)
@@ -154,4 +154,31 @@ int settings_key_handler(unsigned char key)
     }
     settings_display_menu();
     return 1;
+}
+
+unsigned short generate_http_settings( void *arg )
+{
+    int index = 0;
+    int ii;
+
+    index += sprintf(uip_appdata + index, "<font face=\"courier\"><pre>\n");
+
+
+    for (ii = 0;
+	 settings_display_list[ii].fmt != NULL;
+	 ii++)
+    {
+	struct settings_display *disp = &settings_display_list[ii];
+	if (disp->type == FLOAT)
+	{
+	    index += sprintf(uip_appdata + index, disp->fmt, *((float *)disp->value));
+	}
+	else if (disp->type == UINT8)
+	{
+	    index += sprintf(uip_appdata + index, disp->fmt, *((uint8_t *)disp->value));
+	}
+	index += sprintf(uip_appdata + index, "<br>\n");
+    }
+    index += sprintf(uip_appdata + index, "</pre></font>\n");
+    return strlen( uip_appdata );
 }

@@ -141,7 +141,7 @@ required to ensure flase positive timing errors are not reported. */
 /* IP address configuration. */
 #define configIP_ADDR0		192
 #define configIP_ADDR1		168
-#define configIP_ADDR2		0
+#define configIP_ADDR2		88
 #define configIP_ADDR3		200
 
 /* Netmask configuration. */

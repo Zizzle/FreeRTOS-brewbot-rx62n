@@ -38,6 +38,12 @@ CFILES_ENET = \
 	Source/portable/MemMang/heap_2.c \
 	Source/queue.c \
 	Source/tasks.c \
+	fatfs/ff.c \
+	fatfs/diskio.c \
+	brewbot/network-apps/memb.c \
+	brewbot/network-apps/ftp.c \
+	brewbot/network-apps/telnetd.c \
+	brewbot/network-apps/shell.c \
 	brewbot/crane.c \
 	brewbot/menu.c \
 	brewbot/diagnostics.c \

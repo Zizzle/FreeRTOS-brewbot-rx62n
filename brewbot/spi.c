@@ -54,7 +54,7 @@ void spi_open()
     RSPI0.SPSCR.BYTE = 0x00;  // One frame
 }
 
-void spi_write(uint8_t *out, uint32_t outlen)
+void spi_write(const uint8_t *out, uint32_t outlen)
 {
     while (outlen--)
     {

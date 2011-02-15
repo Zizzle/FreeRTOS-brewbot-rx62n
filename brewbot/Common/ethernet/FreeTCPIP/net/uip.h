@@ -53,6 +53,8 @@
 #ifndef __UIP_H__
 #define __UIP_H__
 
+#include "webserver.h"
+
 #include "net/uipopt.h"
 #include "uip-conf.h"
 

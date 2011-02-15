@@ -35,13 +35,22 @@
 #ifndef __WEBSERVER_H__
 #define __WEBSERVER_H__
 
+#include "network-apps/telnetd.h"
 #include "apps/httpd/httpd.h"
 
-typedef struct httpd_state uip_tcp_appstate_t;
+void uip_tcp_appcall(void);
+
+union _app_state
+{
+    struct telnetd_state telnetd_appstate;
+    struct httpd_state   httpd_appstate;
+};
+
+typedef union _app_state uip_tcp_appstate_t;
 /* UIP_APPCALL: the name of the application function. This function
    must return void and take no arguments (i.e., C type "void
    appfunc(void)"). */
-#define UIP_APPCALL     httpd_appcall
+#define UIP_APPCALL     uip_tcp_appcall 
 
 
 #endif /* __WEBSERVER_H__ */

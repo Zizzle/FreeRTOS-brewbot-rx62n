@@ -66,9 +66,7 @@
 #include "sys/timer.h"
 #include "net/clock-arch.h"
 #include "r_ether.h"
-
-/* Demo includes. */
-//#include "ParTest.h"
+#include "network-apps/telnetd.h"
 
 /*-----------------------------------------------------------*/
 
@@ -130,7 +128,9 @@ struct timer periodic_timer, arp_timer;
 	uip_ipaddr( &xIPAddr, configNET_MASK0, configNET_MASK1, configNET_MASK2, configNET_MASK3 );
 	uip_setnetmask( &xIPAddr );
 	prvSetMACAddress();
+
 	httpd_init();
+	telnetd_init();
 
 	/* Create the semaphore used to wake the uIP task. */
 	vSemaphoreCreateBinary( xEMACSemaphore );
@@ -270,3 +270,17 @@ char *c;
 #endif
 }
 
+void httpd_appcall( void );
+
+void uip_tcp_appcall(void)
+{
+  switch(uip_conn->lport)
+  {
+  case HTONS(23):
+     telnetd_appcall();
+     break;
+  case HTONS(80):
+     httpd_appcall();
+     break;
+  }
+}

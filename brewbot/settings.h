@@ -32,6 +32,8 @@ void settings_save();
 void settings_display(int init);
 int settings_key_handler(unsigned char key);
 
+unsigned short generate_http_settings( void *arg );
+
 
 extern struct settings g_settings;
 

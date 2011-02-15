@@ -51,6 +51,8 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
+#include "settings.h"
+
 HTTPD_CGI_CALL( file, "file-stats", file_stats );
 HTTPD_CGI_CALL( tcp, "tcp-connections", tcp_stats );
 HTTPD_CGI_CALL( net, "net-stats", net_stats );
@@ -267,6 +269,6 @@ static PT_THREAD( led_io ( struct httpd_state *s, char *ptr ) )
 	PSOCK_BEGIN( &s->sout );
 	( void ) ptr;
 	( void ) PT_YIELD_FLAG;
-	PSOCK_GENERATOR_SEND( &s->sout, generate_io_state, NULL );
+	PSOCK_GENERATOR_SEND( &s->sout, generate_http_settings, NULL );
 	PSOCK_END( &s->sout );
 }
