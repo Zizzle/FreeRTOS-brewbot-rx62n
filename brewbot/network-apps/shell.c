@@ -55,7 +55,7 @@ void shell_printf(const char *fmt, ...)
     char message[38];
     va_list ap;
     va_start(ap, fmt);
-    int len = vsnprintf(message, sizeof(message) - 1, fmt, ap);
+    vsnprintf(message, sizeof(message) - 1, fmt, ap);
     va_end(ap);
 
     shell_output(message, "");
@@ -72,21 +72,6 @@ static void parse(register char *str, struct ptentry *t)
   }
 
   p->pfunc(str);
-}
-/*---------------------------------------------------------------------------*/
-static void inttostr(register char *str, unsigned int i)
-{
-  str[0] = '0' + i / 100;
-  if(str[0] == '0') {
-    str[0] = ' ';
-  }
-  str[1] = '0' + (i / 10) % 10;
-  if(str[0] == ' ' && str[1] == '0') {
-    str[1] = ' ';
-  }
-  str[2] = '0' + i % 10;
-  str[3] = ' ';
-  str[4] = 0;
 }
 /*---------------------------------------------------------------------------*/
 static void help(char *str)

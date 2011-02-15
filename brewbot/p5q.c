@@ -104,7 +104,6 @@ void flash_wait_for_write_complete()
 
 void flash_write(uint32_t addr, const uint8_t *buffer, uint32_t byteCount)
 {
-    int ii;
     uint8_t command[4];
 
     //shell_printf("writing to %x, %d bytes", addr, byteCount);

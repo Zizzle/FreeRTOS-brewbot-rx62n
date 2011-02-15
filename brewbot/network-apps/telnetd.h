@@ -54,4 +54,6 @@ struct telnetd_state {
   u8_t state;
 };
 
+void telnetd_init(void);
+
 #endif /* __TELNETD_H__ */
