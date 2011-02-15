@@ -14,6 +14,8 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
+#include "shell.h"
+
 #define SFL_CHIP_SELECT_SET      PORTC.DR.BIT.B0 = 0
 #define SFL_CHIP_SELECT_CLR      PORTC.DR.BIT.B0 = 1
 
@@ -35,6 +37,8 @@ uint8_t flash_read_status_register()
     spi_write(&out, 1);
     spi_read(&status, 1);
     SFL_CHIP_SELECT_CLR;
+
+//    shell_printf("st %x", status);
     return status;
 }
 
@@ -70,37 +74,54 @@ void flash_read(uint32_t addr, uint8_t *buffer, uint32_t byteCount)
     SFL_CHIP_SELECT_CLR;    
 }
 
+void flash_write_enable()
+{
+    int ii;
+    uint8_t command = SPI_FLASH_WRITE_ENABLE;
+    SFL_CHIP_SELECT_SET;
+    spi_write(&command, 1);
+    SFL_CHIP_SELECT_CLR;    
+
+    // wait for write enable bit
+    for (ii = 0;
+	 (flash_read_status_register() & P5Q_WEL) == 0; ii++)
+    {
+	// TODO check for timeout
+	vTaskDelay(1);
+    }
+}
+
+void flash_wait_for_write_complete()
+{
+    int ii;
+    for (ii = 0;flash_is_busy(); ii++)
+    {
+	// TODO check for timeout
+	vTaskDelay(1);
+    }
+    //shell_printf("waited %d", ii);
+}
+
 void flash_write(uint32_t addr, const uint8_t *buffer, uint32_t byteCount)
 {
     int ii;
-    uint8_t command[4] =
-	{
-	    SPI_FLASH_WRITE_ENABLE,
-	    addr >> 16,
-	    addr  >> 8,
-	    addr
-	};
+    uint8_t command[4];
 
-    // first send write enable
-    SFL_CHIP_SELECT_SET;
-    spi_write(command, 1);
-    SFL_CHIP_SELECT_CLR;    
-
-    command[0] = SPI_FLASH_WRITE_BYTES;
+    //shell_printf("writing to %x, %d bytes", addr, byteCount);
 
     while (byteCount)
     {
 	uint8_t amt = (byteCount < PAGE_SIZE ? byteCount : PAGE_SIZE);
 
-	for (ii = 0;flash_is_busy(); ii++)
-	{
-	    // TODO check for timeout
-	     vTaskDelay(1);
-	}
+	// first send write enable
+	flash_write_enable();
 
+	command[0] = SPI_FLASH_WRITE_BYTES;
 	command[1] = (addr >> 16) & 0xFF;
 	command[2] = (addr >> 8) & 0xFF;
 	command[3] = (addr) & 0xFF;
+
+	//shell_printf("writing %x %x %x = %d %x", command[1], command[2], command[3], amt, buffer);
 
 	SFL_CHIP_SELECT_SET;
 	spi_write(command, 4);
@@ -109,5 +130,8 @@ void flash_write(uint32_t addr, const uint8_t *buffer, uint32_t byteCount)
 
 	byteCount -= amt;
 	addr      += amt;
+	buffer    += amt;
+
+	flash_wait_for_write_complete();
     }
 }

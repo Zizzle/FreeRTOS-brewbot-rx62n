@@ -101,4 +101,7 @@ void shell_output(char *str1, char *str2);
  */
 void shell_prompt(char *prompt);
 
+void shell_printf(const char *fmt, ...);
+
+
 #endif /* __SHELL_H__ */

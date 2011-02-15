@@ -43,7 +43,7 @@ void telnetd_appcall(void);
 #define TELNETD_CONF_LINELEN 40
 #endif
 #ifndef TELNETD_CONF_NUMLINES
-#define TELNETD_CONF_NUMLINES 16
+#define TELNETD_CONF_NUMLINES 36
 #endif
 
 struct telnetd_state {
