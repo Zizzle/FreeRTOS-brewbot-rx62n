@@ -11,8 +11,12 @@
 #include <stdlib.h>
 #include "iodefine.h"
 #include "types.h"
+#include "FreeRTOS.h"
+#include "semphr.h"
 
 #define SPI_WAIT_FOR_IDLE()      while (RSPI0.SPSR.BIT.IDLNF);  // ensure transmit register is empty
+
+xSemaphoreHandle xSpiMutex;
 
 void spi_open()
 {    
@@ -52,6 +56,8 @@ void spi_open()
     RSPI0.SPCR.BYTE  = 0xE9;  // Enable RSPI 3wire in master mode with RSPI Enable Transmit Only and Interupt 
     RSPI0.SSLP.BYTE  = 0x09;  // SSL3A Polarity
     RSPI0.SPSCR.BYTE = 0x00;  // One frame
+
+    xSpiMutex = xSemaphoreCreateMutex();
 }
 
 void spi_write(const uint8_t *out, uint32_t outlen)
@@ -75,4 +81,19 @@ void spi_read(uint8_t *in, uint32_t inlen)
 	SPI_WAIT_FOR_IDLE();
 	*in++ = RSPI0.SPDR.WORD.H;
     }
+}
+
+int spi_select()
+{
+    if( xSemaphoreTake( xSpiMutex, ( portTickType ) 10 ) == pdTRUE )
+    {
+	
+	return 1;
+    }
+    return 0;
+}
+
+void spi_release()
+{
+    
 }

@@ -17,6 +17,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "p5q.h"
+#include "fill.h"
 
 static float heat_target = 66.0f;
 static int   heat_duty   = 50;
@@ -220,24 +221,7 @@ static void diag_levels(int initializing)
     if (initializing)
     {
 	lcd_text(0, 1, "Level diagnostic");
-
-	{
-	    uint8_t id[3];
-	    flash_read_id(id);
-	    lcd_printf(2,2, 16, "id = %x %x %x", id[0], id[1], id[2]);
-	}
-	{
-	    uint8_t buff[4];
-	    flash_read(0, buff,sizeof(buff));
-	    lcd_printf(2,4, 16, "id = %x %x %x %x", buff[0], buff[1], buff[2], buff[3]);
-
-	    buff[0] = 0x34;
-	    buff[1] = 0x56;
-	    buff[2] = 0x78;
-	    buff[3] = 0x9A;
-	    flash_write(0, buff, sizeof(buff));
-
-	}
+	fillStart();
     }
 }
 

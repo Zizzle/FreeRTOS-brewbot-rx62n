@@ -47,12 +47,14 @@ CFILES_ENET = \
 	brewbot/network-apps/shell.c \
 	brewbot/crane.c \
 	brewbot/menu.c \
+	brewbot/fill.c \
 	brewbot/diagnostics.c \
 	brewbot/spi.c \
 	brewbot/p5q.c \
 	brewbot/heat.c \
 	brewbot/brew.c \
 	brewbot/buttons.c \
+	brewbot/level_probes.c \
 	brewbot/settings.c \
 	brewbot/ds1820.c
 

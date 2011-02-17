@@ -9,6 +9,7 @@
 #include "spi.h"
 #include "settings.h"
 #include "brew.h"
+#include "fill.h"
 
 /* Priorities at which the tasks are created. */
 #define mainCHECK_TASK_PRIORITY		( configMAX_PRIORITIES - 1 )
@@ -112,6 +113,7 @@ int main(void)
     menu_set_root(main_menu);
     startButtonsTask(); // this will drive the menu system
     startCraneTask();
+    startFillTask();
     vSetupHighFrequencyTimer();
 
     /* Start the tasks running. */

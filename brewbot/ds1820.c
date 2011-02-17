@@ -157,8 +157,6 @@ static void ds1820Task( void *pvParameters )
 	PORT4.DR.BIT.B2 = 1;
 	PORT4.DR.BIT.B3 = 1;
 	PORT4.DDR.BIT.B1 = 1;
-	PORT4.DDR.BIT.B1 = 1;
-	PORT4.DDR.BIT.B1 = 1;
 
 	vTaskEnterCritical();
 	DS1820Init();
