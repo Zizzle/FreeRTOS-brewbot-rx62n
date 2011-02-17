@@ -10,6 +10,7 @@
 #include "settings.h"
 #include "brew.h"
 #include "fill.h"
+#include "level_probes.h"
 
 /* Priorities at which the tasks are created. */
 #define mainCHECK_TASK_PRIORITY		( configMAX_PRIORITIES - 1 )
@@ -94,27 +95,21 @@ int main(void)
 
     spi_open();
     lcd_open();
+    level_probe_init(); // Kick off the ADC continuosly running
     lcd_set_address(0, 0);
-
     settings_load();
-
-    lcd_string(7,0, "IP: ");
-    lcd_display_number(configIP_ADDR0);
-    lcd_display_char('.');
-    lcd_display_number(configIP_ADDR1);
-    lcd_display_char('.');
-    lcd_display_number(configIP_ADDR2);
-    lcd_display_char('.');
-    lcd_display_number(configIP_ADDR3);
 
     /* The web server task. */
     xTaskCreate( vuIP_Task, ( signed char * ) "uIP", mainuIP_STACK_SIZE, NULL, mainuIP_TASK_PRIORITY, NULL );
 
     menu_set_root(main_menu);
     startButtonsTask(); // this will drive the menu system
-    startCraneTask();
-    startFillTask();
+    start_crane_task();
+    start_fill_task();
+    brew_start_task();
     vSetupHighFrequencyTimer();
+
+    lcd_printf(0, 7, 19, "IP: %d.%d.%d.%d", configIP_ADDR0, configIP_ADDR1, configIP_ADDR2, configIP_ADDR3);
 
     /* Start the tasks running. */
     vTaskStartScheduler();

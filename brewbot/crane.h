@@ -10,6 +10,9 @@
 #ifndef CRANE_H
 #define CRANE_H
 
+#include "brew_task.h"
+#include "types.h"
+
 enum Direction
 {
     DIRECTION_UNKNOWN,
@@ -19,8 +22,9 @@ enum Direction
     DIRECTION_RIGHT
 };
 
-void startCraneTask();
-void craneMove(int direction);
-void craneStop();
+void start_crane_task();
+uint8_t crane_is_moving();
+void crane_move(int direction, void (*taskErrorHandler)(brew_task_t *));
+void crane_stop();
 
 #endif

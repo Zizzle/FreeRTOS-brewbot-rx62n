@@ -55,6 +55,7 @@ CFILES_ENET = \
 	brewbot/brew.c \
 	brewbot/buttons.c \
 	brewbot/level_probes.c \
+	brewbot/brew_task.c \
 	brewbot/settings.c \
 	brewbot/ds1820.c
 

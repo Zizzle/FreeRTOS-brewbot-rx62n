@@ -10,6 +10,8 @@
 #ifndef HEAT_H
 #define HEAT_H
 
+#include "types.h"
+
 void setHeatTargetTemperature(float target);
 void setHeatDutyCycle(int duty_cycle);
 
@@ -18,5 +20,8 @@ int   getHeatDutyCycle();
 
 void startHeatTask();
 void stopHeatTask();
+
+uint8_t isHeatTaskRunning();
+uint8_t heat_has_reached_target();
 
 #endif

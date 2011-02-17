@@ -14,9 +14,18 @@ static int servoPwmCount = 0;
 #define NUM_SERVOS 3
 static int servoPos[NUM_SERVOS];
 
+/*-----------------------------------------------------------*/
 void servo_set_pos(short servo, short degrees)
 {
     servoPos[servo] = 10 + (degrees * 40) / 180;
+}
+/*-----------------------------------------------------------*/
+void hop_drop(short servo)
+{
+    if (servo >= NUM_SERVOS)
+	return;
+    servo_set_pos(servo, 180);
+    servo_set_pos(servo, 0);
 }
 
 void vTimer2_ISR_Handler( void ) __attribute__((interrupt));

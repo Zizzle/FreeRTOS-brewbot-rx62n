@@ -10,6 +10,8 @@
 #ifndef BREW_H
 #define BREW_H
 
+void brew_start_task();
+
 void brew_start(int init);
 int  brew_key_handler(unsigned char key);
 void brew_resume(int init);

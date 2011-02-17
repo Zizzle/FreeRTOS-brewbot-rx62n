@@ -10,7 +10,11 @@
 #ifndef FILL_H
 #define FILL_H
 
-void startFillTask();
-void fillStart();
+#include "brew_task.h"
+
+void start_fill_task();
+void fill_start(void (*taskErrorHandler)(brew_task_t *));
+void fill_stop();
+uint8_t fill_is_running();
 
 #endif

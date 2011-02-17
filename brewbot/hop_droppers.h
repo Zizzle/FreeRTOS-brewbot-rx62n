@@ -10,6 +10,7 @@
 #ifndef HOP_DROPPERS_H
 #define HOP_DROPPERS_H
 
+void hop_drop(short servo);
 void servo_set_pos(short servo, short degrees);
 
 #endif

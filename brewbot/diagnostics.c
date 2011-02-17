@@ -7,6 +7,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 #include <stdlib.h>
+#include "FreeRTOS.h"
+#include "task.h"
 #include "menu.h"
 #include "heat.h"
 #include "buttons.h"
@@ -14,8 +16,6 @@
 #include "lcd.h"
 #include "crane.h"
 #include "hop_droppers.h"
-#include "FreeRTOS.h"
-#include "task.h"
 #include "p5q.h"
 #include "fill.h"
 
@@ -82,7 +82,7 @@ static void diag_crane(int initializing)
     }
     else
     {
-	craneStop();
+	crane_stop();
     }
 }
 
@@ -90,19 +90,19 @@ static int diag_crane_key(unsigned char key)
 {
     if (upKeyPressed(key))
     {
-	craneMove(DIRECTION_UP);
+	crane_move(DIRECTION_UP, NULL);
     }
     else if (downKeyPressed(key))
     {
-	craneMove(DIRECTION_DOWN);
+	crane_move(DIRECTION_DOWN, NULL);
     }
     else if (leftKeyPressed(key))
     {
-	craneMove(DIRECTION_LEFT);
+	crane_move(DIRECTION_LEFT, NULL);
     }
     else if (rightKeyPressed(key))
     {
-	craneMove(DIRECTION_RIGHT);
+	crane_move(DIRECTION_RIGHT, NULL);
     }
 
     return 1;
@@ -221,12 +221,19 @@ static void diag_levels(int initializing)
     if (initializing)
     {
 	lcd_text(0, 1, "Level diagnostic");
-	fillStart();
+    }
+    else
+    {
+	fill_stop();
     }
 }
 
 static int diag_level_key(unsigned char key)
 {
+    if (rightKeyPressed(key))
+    {
+	fill_start(NULL);
+    }
     return 0;
 }
 //----------------------------------------------------------------------------
