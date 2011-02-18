@@ -1,5 +1,6 @@
 #include "iodefine.h"
 #include "lcd.h"
+#include "spi.h"
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -7,16 +8,14 @@
 
 // lcd is 96 x 64 pixels
 // 19 x 8 chars
+#define LCD_W 96
+#define LCD_H 64
 
 #define CHAR_W 5
-
 
 // the A0 line is used to determine which mode the byte sent is to be interpreted in
 #define LCD_SET_COMMAND_MODE     PORT5.DR.BIT.B1 = 0
 #define LCD_SET_DATA_MODE        PORT5.DR.BIT.B1 = 1
-// we need to assert the chip select line before sending any data to the LCD
-#define LCD_CHIP_SELECT_SET      PORTC.DR.BIT.B2 = 0
-#define LCD_CHIP_SELECT_CLR      PORTC.DR.BIT.B2 = 1
 
 void lcd_open()
 {
@@ -71,26 +70,14 @@ void lcd_set_address(uint8_t yy, uint8_t xx)
     lcd_set_x(xx);
 }
 
-void lcd_out_byte(int16_t sHighWord, uint8_t isCommand)
+void lcd_out_byte(uint8_t byte, uint8_t isCommand)
 {
-    LCD_CHIP_SELECT_SET;
-
+    if (!spi_select(SPI_DEVICE_LCD))
+	return;
     if (isCommand) LCD_SET_COMMAND_MODE;
     else LCD_SET_DATA_MODE;
-
-    while (RSPI0.SPSR.BIT.IDLNF)  // ensure transmit register is empty
-	;
-
-    RSPI0.SPDR.WORD.L = 0 ;
-    RSPI0.SPDR.WORD.H = sHighWord;
-
-    while (RSPI0.SPSR.BIT.IDLNF) // wait for transfer to complete
-	;
-
-    (void)RSPI0.SPDR.WORD.L;
-    (void)RSPI0.SPDR.WORD.H;
-
-    LCD_CHIP_SELECT_CLR;
+    spi_write(&byte, 1);
+    spi_release();
 }
 
 void lcd_command(int8_t command)

@@ -13,10 +13,19 @@
 #include "types.h"
 #include "FreeRTOS.h"
 #include "semphr.h"
+#include "spi.h"
 
 #define SPI_WAIT_FOR_IDLE()      while (RSPI0.SPSR.BIT.IDLNF);  // ensure transmit register is empty
 
+// we need to assert the chip select line before sending any data to the LCD
+#define LCD_CHIP_SELECT_SET      PORTC.DR.BIT.B2 = 0
+#define LCD_CHIP_SELECT_CLR      PORTC.DR.BIT.B2 = 1
+
+#define SFL_CHIP_SELECT_SET      PORTC.DR.BIT.B0 = 0
+#define SFL_CHIP_SELECT_CLR      PORTC.DR.BIT.B0 = 1
+
 xSemaphoreHandle xSpiMutex;
+enum SpiDevice spi_device = SPI_DEVICE_NONE;
 
 void spi_open()
 {    
@@ -52,8 +61,7 @@ void spi_open()
     RSPI0.SPND.BYTE  = 0x00;  // 2 clock delay before next access to SPI device
     RSPI0.SPCR2.BYTE = 0x00;  // No parity no idle interrupts
     RSPI0.SPCMD0.WORD = 0x0700; // MSB first 8-bit data, keep SSL low
-    //RSPI0.SPCR.BYTE  = 0x6B;  // Enable RSPI 3wire in master mode with RSPI Enable Transmit Only and Interupt 
-    RSPI0.SPCR.BYTE  = 0xE9;  // Enable RSPI 3wire in master mode with RSPI Enable Transmit Only and Interupt 
+    RSPI0.SPCR.BYTE  = 0xE9;  // Enable RSPI 3wire in master mode 
     RSPI0.SSLP.BYTE  = 0x09;  // SSL3A Polarity
     RSPI0.SPSCR.BYTE = 0x00;  // One frame
 
@@ -83,17 +91,33 @@ void spi_read(uint8_t *in, uint32_t inlen)
     }
 }
 
-int spi_select()
+int spi_select(enum SpiDevice device)
 {
-    if( xSemaphoreTake( xSpiMutex, ( portTickType ) 10 ) == pdTRUE )
-    {
-	
-	return 1;
+    if( xSemaphoreTake( xSpiMutex, SPI_DEFAULT_LOCK_WAIT ) != pdTRUE )
+    {	
+	return 0;
     }
-    return 0;
+    spi_device = device;
+    switch (device)
+    {
+    case SPI_DEVICE_LCD:
+	LCD_CHIP_SELECT_SET;
+	break;
+
+    case SPI_DEVICE_P5Q:
+	SFL_CHIP_SELECT_SET;
+	break;
+
+    default: break;
+    }
+
+    return 1;
 }
 
 void spi_release()
 {
-    
+    xSemaphoreGive(xSpiMutex);
+    spi_device = SPI_DEVICE_NONE;
+    LCD_CHIP_SELECT_CLR;
+    SFL_CHIP_SELECT_CLR;
 }
