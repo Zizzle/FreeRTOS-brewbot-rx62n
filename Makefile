@@ -1,12 +1,12 @@
 all : freertos.elf
 
 CFLAGS = \
-	-I brewbot/Common/include \
-	-I brewbot/webserver \
-	-I brewbot/network-apps \
 	-I brewbot \
-	-I brewbot/flash \
+	-I brewbot/drivers \
 	-I brewbot/include \
+	-I brewbot/Common/include \
+	-I brewbot/network-apps \
+	-I brewbot/network-apps/webserver \
 	-I brewbot/Common/ethernet/FreeTCPIP \
 	-I Source/include \
 	-I Source/portable/GCC/RX600 \
@@ -15,6 +15,14 @@ CFLAGS = \
 
 CFILES_ENET = \
 	brewbot/GNU-Files/start.asm \
+	brewbot/GNU-Files/hwinit.c \
+	brewbot/GNU-Files/inthandler.c \
+	brewbot/Renesas-Files/hwsetup.c \
+	Source/list.c \
+	Source/portable/GCC/RX600/port.c \
+	Source/portable/MemMang/heap_2.c \
+	Source/queue.c \
+	Source/tasks.c \
 	brewbot/Common/ethernet/FreeTCPIP/apps/httpd/http-strings.c \
 	brewbot/Common/ethernet/FreeTCPIP/apps/httpd/httpd-fs.c \
 	brewbot/Common/ethernet/FreeTCPIP/apps/httpd/httpd.c \
@@ -22,42 +30,34 @@ CFILES_ENET = \
 	brewbot/Common/ethernet/FreeTCPIP/timer.c \
 	brewbot/Common/ethernet/FreeTCPIP/uip.c \
 	brewbot/Common/ethernet/FreeTCPIP/uip_arp.c \
-	brewbot/GNU-Files/hwinit.c \
-	brewbot/GNU-Files/inthandler.c \
-	brewbot/hop_droppers.c \
-	brewbot/Renesas-Files/hwsetup.c \
-	brewbot/main-full.c \
-	brewbot/uIP_Task.c \
-	brewbot/vects.c \
-	brewbot/webserver/EMAC.c \
-	brewbot/webserver/httpd-cgi.c \
-	brewbot/webserver/phy.c \
-	brewbot/lcd.c \
-	brewbot/font_x5x7.c \
-	Source/list.c \
-	Source/portable/GCC/RX600/port.c \
-	Source/portable/MemMang/heap_2.c \
-	Source/queue.c \
-	Source/tasks.c \
-	brewbot/fatfs/ff.c \
-	brewbot/fatfs/diskio.c \
+	brewbot/network-apps/webserver/EMAC.c \
+	brewbot/network-apps/webserver/httpd-cgi.c \
+	brewbot/network-apps/webserver/phy.c \
 	brewbot/network-apps/memb.c \
 	brewbot/network-apps/ftp.c \
 	brewbot/network-apps/telnetd.c \
 	brewbot/network-apps/shell.c \
+	brewbot/network-apps/uIP_Task.c \
+	brewbot/drivers/ds1820.c \
+	brewbot/drivers/spi.c \
+	brewbot/drivers/p5q.c \
+	brewbot/drivers/lcd.c \
+	brewbot/drivers/font_x5x7.c \
+	brewbot/drivers/vects.c \
+	brewbot/fatfs/ff.c \
+	brewbot/fatfs/diskio.c \
+	brewbot/hop_droppers.c \
 	brewbot/crane.c \
 	brewbot/menu.c \
 	brewbot/fill.c \
 	brewbot/diagnostics.c \
-	brewbot/spi.c \
-	brewbot/p5q.c \
 	brewbot/heat.c \
 	brewbot/brew.c \
 	brewbot/buttons.c \
 	brewbot/level_probes.c \
 	brewbot/brew_task.c \
 	brewbot/settings.c \
-	brewbot/ds1820.c
+	brewbot/main-full.c
 
 CFILES = \
 	brewbot/GNU-Files/start.asm \
