@@ -74,9 +74,6 @@
 #define PRINTNUM(x)
 #endif /* NOT DEBUG */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 static void _abort(void);
 static void _timeout(void);
 static void _close(void);
@@ -89,21 +86,21 @@ static void _retrasmit(void);
 
 static void SplitCmdArg(char * line, char ** cmd, char ** args);
 
-static const char cmd_cwd_P[] = "CWD";
+static const char cmd_cwd_P[]  = "CWD";
 static const char cmd_dele_P[] = "DELE";
 static const char cmd_list_P[] = "LIST";
-static const char cmd_mkd_P[] = "MKD";
+static const char cmd_mkd_P[]  = "MKD";
 static const char cmd_xmkd_P[] = "XMKD";
 static const char cmd_nlst_P[] = "NLST";
 static const char cmd_noop_P[] = "NOOP";
 static const char cmd_pass_P[] = "PASS";
 static const char cmd_pasv_P[] = "PASV";
 static const char cmd_port_P[] = "PORT";
-static const char cmd_pwd_P[] = "PWD";
+static const char cmd_pwd_P[]  = "PWD";
 static const char cmd_xpwd_P[] = "XPWD";
 static const char cmd_quit_P[] = "QUIT";
 static const char cmd_retr_P[] = "RETR";
-static const char cmd_rmd_P[] = "RMD";
+static const char cmd_rmd_P[]  = "RMD";
 static const char cmd_xrmd_P[] = "XRMD";
 static const char cmd_size_P[] = "SIZE";
 static const char cmd_stor_P[] = "STOR";
@@ -214,13 +211,13 @@ static void _senddata_data(void);
 static void _retrasmit_data(void);
 
 struct {
-	unsigned char Status;
-	unsigned char RecvCmd;
-	unsigned char AnsToCmd;
-	unsigned char ftpMode;
-	unsigned char ftpType;
-	unsigned char ftpStru;
-	} exchgParams;
+    unsigned char Status;
+    unsigned char RecvCmd;
+    unsigned char AnsToCmd;
+    unsigned char ftpMode;
+    unsigned char ftpType;
+    unsigned char ftpStru;
+} exchgParams;
 
 struct ftpd_state {
     int count;
@@ -228,13 +225,13 @@ struct ftpd_state {
     char IsCmdWD;
     
     
-	unsigned char Status;
-	unsigned char RecvCmd;
-	unsigned char AnsToCmd;
-	unsigned char ftpMode;
-	unsigned char ftpType;
-	unsigned char ftpStru;
-	};
+    unsigned char Status;
+    unsigned char RecvCmd;
+    unsigned char AnsToCmd;
+    unsigned char ftpMode;
+    unsigned char ftpType;
+    unsigned char ftpStru;
+};
 
 
 // test test test
@@ -243,316 +240,310 @@ unsigned long ftpd_sadd = 0x00420000;
 char* ftpd_name = "DDF.ddf";
 //END
 
-#ifdef __cplusplus
-}
-#endif
-
 
 void ftpd_init(void)
 {
-  /* Listen to port 21. */
-  uip_listen(HTONS(21));
+    /* Listen to port 21. */
+    uip_listen(HTONS(21));
 }
 
 void ftpd_init_data(void)
 {
-  /* Listen to port 20. */
-  uip_listen(HTONS(20));
+    /* Listen to port 20. */
+    uip_listen(HTONS(20));
 }
 
 void ftpd_appcall_data(void)
 {
-	if(uip_aborted()) {
-		_abort_data();
-		}
-	if(uip_timedout()) {
-		_timeout_data();
-		}
-	if(uip_closed()) {
-		_close_data();
-		}
-	if(uip_connected()) {
-		_connect_data();
-		}
-	if(uip_acked()) {
-		_ack_data();
-		}
-	if(uip_newdata()) {
-		_newdata_data();
-		}
-	if(uip_poll()) {
-		_poll_data();
-		}
-	if(uip_rexmit()) {
-		_retrasmit_data();
-		}
-	if(uip_rexmit() ||
-		uip_newdata() ||
-		uip_acked() ||
-		uip_connected() ||
-		uip_poll()) {
-		_senddata_data();
-		}
+    if(uip_aborted()) {
+	_abort_data();
+    }
+    if(uip_timedout()) {
+	_timeout_data();
+    }
+    if(uip_closed()) {
+	_close_data();
+    }
+    if(uip_connected()) {
+	_connect_data();
+    }
+    if(uip_acked()) {
+	_ack_data();
+    }
+    if(uip_newdata()) {
+	_newdata_data();
+    }
+    if(uip_poll()) {
+	_poll_data();
+    }
+    if(uip_rexmit()) {
+	_retrasmit_data();
+    }
+    if(uip_rexmit() ||
+       uip_newdata() ||
+       uip_acked() ||
+       uip_connected() ||
+       uip_poll()) {
+	_senddata_data();
+    }
 }
 
 void ftpd_appcall(void)
 {
-	if(uip_aborted()) {
-		_abort();
-		}
-	if(uip_timedout()) {
-		_timeout();
-		}
-	if(uip_closed()) {
-		_close();
-		}
-	if(uip_connected()) {
-		_connect();
-		}
-	if(uip_acked()) {
-		_ack();
-		}
-	if(uip_newdata()) {
-		_newdata();
-		}
-	if(uip_poll()) {
-		_poll();
-		}
-	if(uip_rexmit()) {
-		_retrasmit();
-		}
-	if(uip_rexmit() ||
-		uip_newdata() ||
-		uip_acked() ||
-		uip_connected() ||
-		uip_poll()) {
-		_senddata();
-		}
+    if(uip_aborted()) {
+	_abort();
+    }
+    if(uip_timedout()) {
+	_timeout();
+    }
+    if(uip_closed()) {
+	_close();
+    }
+    if(uip_connected()) {
+	_connect();
+    }
+    if(uip_acked()) {
+	_ack();
+    }
+    if(uip_newdata()) {
+	_newdata();
+    }
+    if(uip_poll()) {
+	_poll();
+    }
+    if(uip_rexmit()) {
+	_retrasmit();
+    }
+    if(uip_rexmit() ||
+       uip_newdata() ||
+       uip_acked() ||
+       uip_connected() ||
+       uip_poll()) {
+	_senddata();
+    }
 }
 
 void _abort(void)
 {
 //	struct arnftpd_state *ftps = (struct arnftpd_state *)(uip_conn->appstate);
-	PRINT("Abort_Handler:\n");
-	uip_abort();
+    PRINT("Abort_Handler:\n");
+    uip_abort();
 }
 
 void _timeout(void)
 {
 //	struct arnftpd_state *ftps = (struct arnftpd_state *)(uip_conn->appstate);
-	PRINT("Timeout_Handler:\n");
-	uip_close();
+    PRINT("Timeout_Handler:\n");
+    uip_close();
 }
 
 void _close(void)
 {
 //	struct arnftpd_state *ftps = (struct arnftpd_state *)(uip_conn->appstate);
-	PRINT("Close_Handler:\n");
+    PRINT("Close_Handler:\n");
 //	exchgParams.Status = FTPDSTS_CLOSING_DATACONN;
 }
 
 
 void _connect(void)
 {
-	struct ftpd_state *ftps = (struct ftpd_state *)(&uip_conn->appstate);
-	ftps->RecvCmd = FTPDREC_CONNECT;
-	ftps->count = strlen(rep_banner);
-	uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
-	strncpy((char*) (uip_appdata),(char*)(rep_banner),uip_len);
-	ftps->AnsToCmd = FTPDANS_BANNER;
+    struct ftpd_state *ftps = (struct ftpd_state *)(&uip_conn->appstate);
+    ftps->RecvCmd = FTPDREC_CONNECT;
+    ftps->count = strlen(rep_banner);
+    uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
+    strncpy((char*) (uip_appdata),(char*)(rep_banner),uip_len);
+    ftps->AnsToCmd = FTPDANS_BANNER;
 
-	ftps->dataptr = 0;
-	ftps->count = 0;
-	ftps->IsCmdWD = FALSE;
-	ftps->Status = FTPDSTS_WAITFORCMD;
-	exchgParams.Status = FTPDSTS_NONE;
-	exchgParams.ftpMode = FTPDMOD_STREAM;
-	exchgParams.ftpType = FTPDTYP_ASCII;
-	exchgParams.ftpStru = FTPDSTRU_FILE;
-	//PRINT("Connect_Handler:\n");
+    ftps->dataptr = 0;
+    ftps->count = 0;
+    ftps->IsCmdWD = FALSE;
+    ftps->Status = FTPDSTS_WAITFORCMD;
+    exchgParams.Status = FTPDSTS_NONE;
+    exchgParams.ftpMode = FTPDMOD_STREAM;
+    exchgParams.ftpType = FTPDTYP_ASCII;
+    exchgParams.ftpStru = FTPDSTRU_FILE;
+    //PRINT("Connect_Handler:\n");
 }
 
 void _newdata(void)
 {
-	struct ftpd_state *ftps = (struct ftpd_state *)(&uip_conn->appstate);
-	char* cmd;
-	char* arg;
-	//PRINT("Newdata_Handler:\n");
-	if (ftps->Status != FTPDSTS_WAITFORCMD) return;
-	SplitCmdArg((char*)uip_appdata,&cmd,&arg);
-	PRINTLN(cmd);
-	PRINTLN(arg);
-	if (!strcmp(cmd,cmd_user_P)) {
-		ftps->RecvCmd = FTPDREC_USER;
-		ftps->count = strlen(okCode230);
-		uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
-		strncpy((char*) (uip_appdata),(char*)(okCode230),uip_len);
-		ftps->AnsToCmd = FTPDANS_OK230;
-		ftps->IsCmdWD = FALSE;
-		ftps->Status = FTPDSTS_SENDING_CTLANS;
-		}
-	else if (!strcmp(cmd,cmd_syst_P)) {
-		char *msg = "215 UNIX Type: L8\r\n";
-		ftps->RecvCmd = FTPDREC_SYST;
-		ftps->count = strlen(msg);
-		uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
-		strncpy((char*) (uip_appdata),(char*)(msg),uip_len);
-		ftps->AnsToCmd = FTPDANS_SYST;
-		ftps->IsCmdWD = FALSE;
-		ftps->Status = FTPDSTS_SENDING_CTLANS;
-		}
-	else if (!strcmp(cmd,cmd_pwd_P) || (!strcmp(cmd,cmd_xpwd_P))) {
-		char *msg = "257 \"/\"\r\n";
-		ftps->RecvCmd = FTPDREC_PWD;
-		ftps->count = strlen(msg);
-		uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
-		strncpy((char*) (uip_appdata),(char*)(msg),uip_len);
-		ftps->AnsToCmd = FTPDANS_PWD;
-		ftps->IsCmdWD = FALSE;
-		ftps->Status = FTPDSTS_SENDING_CTLANS;
-		}
-	else if (!strcmp(cmd,cmd_type_P)) {
-		ftps->RecvCmd = FTPDREC_TYPE;
-		if (!strcmp(arg,"A")) exchgParams.ftpType = FTPDTYP_ASCII;
-		else exchgParams.ftpType = FTPDTYP_BINARY;
-		ftps->count = strlen(okCode200);
-		uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
-		strncpy((char*) (uip_appdata),(char*)(okCode200),uip_len);
-		ftps->AnsToCmd = FTPDANS_OK200;
-		ftps->IsCmdWD = FALSE;
-		ftps->Status = FTPDSTS_WAITFORCMD;
-		}
-	else if (!strcmp(cmd,cmd_quit_P)) {
-		ftps->RecvCmd = FTPDREC_QUIT;
-		ftps->count = strlen(okCode221);
-		uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
-		strncpy((char*) (uip_appdata),(char*)(okCode221),uip_len);
-		ftps->AnsToCmd = FTPDANS_OK221;
-		ftps->IsCmdWD = FALSE;
-		ftps->Status = FTPDSTS_SENDING_CTLANS;
-		}
-	else if (!strcmp(cmd,cmd_pasv_P)) {
-		unsigned short hadd[2];
-		ftps->RecvCmd = FTPDREC_PASV;
-		uip_gethostaddr(hadd);
-		sprintf((char*)uip_appdata,"227 Passive (%u,%u,%u,%u,%u,%u).\r\n",
-			(unsigned char) (hadd[0] >> 8), (unsigned char) (hadd[0] & 0x00ff),
-			(unsigned char) (hadd[1] >> 8), (unsigned char) (hadd[1] & 0x00ff),
-			0, 20); // port
-		ftps->count = strlen((char*)uip_appdata);
-		uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
-		ftps->AnsToCmd = FTPDANS_PASV;
-		ftps->IsCmdWD = FALSE;
-		ftps->Status = FTPDSTS_SENDING_CTLANS;
-		}
-	else if (!strcmp(cmd,cmd_size_P)) {
-		ftps->RecvCmd = FTPDREC_SIZE;
-		char tmpBff[32];tmpBff[0] = '/';
-		strcpy(tmpBff + 1,ftpd_name);
-		if (!strcmp(arg,tmpBff) || !strcmp(arg,ftpd_name)) {
-			sprintf((char*)uip_appdata,"213 %6lu\r\n",
-			(unsigned long) ftpd_size); 
-			ftps->count = strlen((char*)uip_appdata);
-			uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
-			ftps->AnsToCmd = FTPDANS_SIZE;
-			}
-		else {
-			ftps->count = strlen(FailCode502);
-			uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
-			strncpy((char*) (uip_appdata),(char*)(FailCode502),uip_len);
-			ftps->AnsToCmd = FTPDANS_FAIL502;
-			}
-		ftps->IsCmdWD = FALSE;
-		ftps->Status = FTPDSTS_SENDING_CTLANS;
-		}
-	else if (!strcmp(cmd,cmd_list_P) || !strcmp(cmd,cmd_nlst_P)) {
-		char* msg = "150 opening data connection list answer.\r\n";
-		ftps->RecvCmd = FTPDREC_LIST;
-		ftps->count = strlen(msg);
-		uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
-		strncpy((char*) (uip_appdata),(char*)(msg),uip_len);
-		ftps->AnsToCmd = FTPDANS_LIST;
-		ftps->IsCmdWD = TRUE;
-		ftps->Status = FTPDSTS_SENDING_CTLANS;
-		}
-	else if (!strcmp(cmd,cmd_retr_P)) {
-		if (!strcmp(arg,"/")) {
-			ftps->count = strlen(FailCode504);
-			uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
-			strncpy((char*) (uip_appdata),(char*)(FailCode504),uip_len);
-			ftps->AnsToCmd = FTPDANS_FAIL504;
-			ftps->IsCmdWD = FALSE;
-			}
-		else {
-			char* msg = "150 opening data connection for retr answer.\r\n";
-			ftps->RecvCmd = FTPDREC_RETR;
-			ftps->count = strlen(msg);
-			uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
-			strncpy((char*) (uip_appdata),(char*)(msg),uip_len);
-			ftps->AnsToCmd = FTPDANS_RETR;
-			ftps->IsCmdWD = TRUE;
-			}
-		ftps->Status = FTPDSTS_SENDING_CTLANS;
-		}
-	else if (!strcmp(cmd,cmd_cwd_P)) {
-		ftps->RecvCmd = FTPDREC_CWD;
-		if (!strcmp(arg,"/")) {
-			char* msg = "200 directory changed to /.\r\n";
-			ftps->count = strlen(msg);
-			uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
-			strncpy((char*) (uip_appdata),(char*)(msg),uip_len);
-			ftps->AnsToCmd = FTPDANS_CWD;
-			}
-		else {
-			ftps->count = strlen(FailCode504);
-			uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
-			strncpy((char*) (uip_appdata),(char*)(FailCode504),uip_len);
-			ftps->AnsToCmd = FTPDANS_FAIL504;
-			}
-		ftps->IsCmdWD = FALSE;
-		ftps->Status = FTPDSTS_SENDING_CTLANS;
-		}
-	else if (!strcmp(cmd,cmd_noop_P)) {
-		ftps->RecvCmd = FTPDREC_NOOP;
-		ftps->count = strlen(okCode200);
-		uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
-		strncpy((char*) (uip_appdata),(char*)(okCode200),uip_len);
-		ftps->AnsToCmd = FTPDANS_NOOP;
-		ftps->IsCmdWD = FALSE;
-		ftps->Status = FTPDSTS_SENDING_CTLANS;
-		}
+    struct ftpd_state *ftps = (struct ftpd_state *)(&uip_conn->appstate);
+    char* cmd;
+    char* arg;
+    //PRINT("Newdata_Handler:\n");
+    if (ftps->Status != FTPDSTS_WAITFORCMD) return;
+    SplitCmdArg((char*)uip_appdata,&cmd,&arg);
+    PRINTLN(cmd);
+    PRINTLN(arg);
+    if (!strcmp(cmd,cmd_user_P)) {
+	ftps->RecvCmd = FTPDREC_USER;
+	ftps->count = strlen(okCode230);
+	uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
+	strncpy((char*) (uip_appdata),(char*)(okCode230),uip_len);
+	ftps->AnsToCmd = FTPDANS_OK230;
+	ftps->IsCmdWD = FALSE;
+	ftps->Status = FTPDSTS_SENDING_CTLANS;
+    }
+    else if (!strcmp(cmd,cmd_syst_P)) {
+	char *msg = "215 UNIX Type: L8\r\n";
+	ftps->RecvCmd = FTPDREC_SYST;
+	ftps->count = strlen(msg);
+	uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
+	strncpy((char*) (uip_appdata),(char*)(msg),uip_len);
+	ftps->AnsToCmd = FTPDANS_SYST;
+	ftps->IsCmdWD = FALSE;
+	ftps->Status = FTPDSTS_SENDING_CTLANS;
+    }
+    else if (!strcmp(cmd,cmd_pwd_P) || (!strcmp(cmd,cmd_xpwd_P))) {
+	char *msg = "257 \"/\"\r\n";
+	ftps->RecvCmd = FTPDREC_PWD;
+	ftps->count = strlen(msg);
+	uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
+	strncpy((char*) (uip_appdata),(char*)(msg),uip_len);
+	ftps->AnsToCmd = FTPDANS_PWD;
+	ftps->IsCmdWD = FALSE;
+	ftps->Status = FTPDSTS_SENDING_CTLANS;
+    }
+    else if (!strcmp(cmd,cmd_type_P)) {
+	ftps->RecvCmd = FTPDREC_TYPE;
+	if (!strcmp(arg,"A")) exchgParams.ftpType = FTPDTYP_ASCII;
+	else exchgParams.ftpType = FTPDTYP_BINARY;
+	ftps->count = strlen(okCode200);
+	uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
+	strncpy((char*) (uip_appdata),(char*)(okCode200),uip_len);
+	ftps->AnsToCmd = FTPDANS_OK200;
+	ftps->IsCmdWD = FALSE;
+	ftps->Status = FTPDSTS_WAITFORCMD;
+    }
+    else if (!strcmp(cmd,cmd_quit_P)) {
+	ftps->RecvCmd = FTPDREC_QUIT;
+	ftps->count = strlen(okCode221);
+	uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
+	strncpy((char*) (uip_appdata),(char*)(okCode221),uip_len);
+	ftps->AnsToCmd = FTPDANS_OK221;
+	ftps->IsCmdWD = FALSE;
+	ftps->Status = FTPDSTS_SENDING_CTLANS;
+    }
+    else if (!strcmp(cmd,cmd_pasv_P)) {
+	uip_ipaddr_t hostaddr;
+	uip_gethostaddr(&hostaddr);
+	ftps->RecvCmd = FTPDREC_PASV;
+	sprintf((char*)uip_appdata,"227 Passive (%u,%u,%u,%u,%u,%u).\r\n",
+		uip_ipaddr_to_quad(&hostaddr), 0, 20); // port
+	ftps->count = strlen((char*)uip_appdata);
+	uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
+	ftps->AnsToCmd = FTPDANS_PASV;
+	ftps->IsCmdWD = FALSE;
+	ftps->Status = FTPDSTS_SENDING_CTLANS;
+    }
+    else if (!strcmp(cmd,cmd_size_P)) {
+	ftps->RecvCmd = FTPDREC_SIZE;
+	char tmpBff[32];tmpBff[0] = '/';
+	strcpy(tmpBff + 1,ftpd_name);
+	if (!strcmp(arg,tmpBff) || !strcmp(arg,ftpd_name)) {
+	    sprintf((char*)uip_appdata,"213 %6lu\r\n",
+		    (unsigned long) ftpd_size); 
+	    ftps->count = strlen((char*)uip_appdata);
+	    uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
+	    ftps->AnsToCmd = FTPDANS_SIZE;
+	}
 	else {
-		ftps->RecvCmd = FTPDREC_UNK;
-		ftps->count = strlen(FailCode502);
-		uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
-		strncpy((char*) (uip_appdata),(char*)(FailCode502),uip_len);
-		ftps->AnsToCmd = FTPDANS_FAIL502;
-		ftps->IsCmdWD = FALSE;
-		ftps->Status = FTPDSTS_SENDING_CTLANS;
-		}
+	    ftps->count = strlen(FailCode502);
+	    uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
+	    strncpy((char*) (uip_appdata),(char*)(FailCode502),uip_len);
+	    ftps->AnsToCmd = FTPDANS_FAIL502;
+	}
+	ftps->IsCmdWD = FALSE;
+	ftps->Status = FTPDSTS_SENDING_CTLANS;
+    }
+    else if (!strcmp(cmd,cmd_list_P) || !strcmp(cmd,cmd_nlst_P)) {
+	char* msg = "150 opening data connection list answer.\r\n";
+	ftps->RecvCmd = FTPDREC_LIST;
+	ftps->count = strlen(msg);
+	uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
+	strncpy((char*) (uip_appdata),(char*)(msg),uip_len);
+	ftps->AnsToCmd = FTPDANS_LIST;
+	ftps->IsCmdWD = TRUE;
+	ftps->Status = FTPDSTS_SENDING_CTLANS;
+    }
+    else if (!strcmp(cmd,cmd_retr_P)) {
+	if (!strcmp(arg,"/")) {
+	    ftps->count = strlen(FailCode504);
+	    uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
+	    strncpy((char*) (uip_appdata),(char*)(FailCode504),uip_len);
+	    ftps->AnsToCmd = FTPDANS_FAIL504;
+	    ftps->IsCmdWD = FALSE;
+	}
+	else {
+	    char* msg = "150 opening data connection for retr answer.\r\n";
+	    ftps->RecvCmd = FTPDREC_RETR;
+	    ftps->count = strlen(msg);
+	    uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
+	    strncpy((char*) (uip_appdata),(char*)(msg),uip_len);
+	    ftps->AnsToCmd = FTPDANS_RETR;
+	    ftps->IsCmdWD = TRUE;
+	}
+	ftps->Status = FTPDSTS_SENDING_CTLANS;
+    }
+    else if (!strcmp(cmd,cmd_cwd_P)) {
+	ftps->RecvCmd = FTPDREC_CWD;
+	if (!strcmp(arg,"/")) {
+	    char* msg = "200 directory changed to /.\r\n";
+	    ftps->count = strlen(msg);
+	    uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
+	    strncpy((char*) (uip_appdata),(char*)(msg),uip_len);
+	    ftps->AnsToCmd = FTPDANS_CWD;
+	}
+	else {
+	    ftps->count = strlen(FailCode504);
+	    uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
+	    strncpy((char*) (uip_appdata),(char*)(FailCode504),uip_len);
+	    ftps->AnsToCmd = FTPDANS_FAIL504;
+	}
+	ftps->IsCmdWD = FALSE;
+	ftps->Status = FTPDSTS_SENDING_CTLANS;
+    }
+    else if (!strcmp(cmd,cmd_noop_P)) {
+	ftps->RecvCmd = FTPDREC_NOOP;
+	ftps->count = strlen(okCode200);
+	uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
+	strncpy((char*) (uip_appdata),(char*)(okCode200),uip_len);
+	ftps->AnsToCmd = FTPDANS_NOOP;
+	ftps->IsCmdWD = FALSE;
+	ftps->Status = FTPDSTS_SENDING_CTLANS;
+    }
+    else {
+	ftps->RecvCmd = FTPDREC_UNK;
+	ftps->count = strlen(FailCode502);
+	uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
+	strncpy((char*) (uip_appdata),(char*)(FailCode502),uip_len);
+	ftps->AnsToCmd = FTPDANS_FAIL502;
+	ftps->IsCmdWD = FALSE;
+	ftps->Status = FTPDSTS_SENDING_CTLANS;
+    }
 }
 
 void _poll(void)
 {
-	struct ftpd_state *ftps = (struct ftpd_state *)(&uip_conn->appstate);
-	if (ftps->IsCmdWD ) {
-		if (exchgParams.Status == FTPDSTS_SENT_FTPDATA) {
-			ftps->Status = exchgParams.Status;
-			switch (ftps->AnsToCmd) {
-				case FTPDANS_LIST:
-				case FTPDANS_RETR:
-					ftps->AnsToCmd = FTPDANS_OK226;
-					ftps->count = strlen(okCode226);
-					uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
-					strncpy((char*) (uip_appdata),(char*)(okCode226),uip_len);
-					ftps->IsCmdWD = FALSE;
-					exchgParams.Status = FTPDSTS_NONE;
-					ftps->Status = FTPDSTS_SENDING_ENDDATACTLANS;
-					break;
-				default: break;
-				}
-			}
-		}
+    struct ftpd_state *ftps = (struct ftpd_state *)(&uip_conn->appstate);
+    if (ftps->IsCmdWD ) {
+	if (exchgParams.Status == FTPDSTS_SENT_FTPDATA) {
+	    ftps->Status = exchgParams.Status;
+	    switch (ftps->AnsToCmd) {
+	    case FTPDANS_LIST:
+	    case FTPDANS_RETR:
+		ftps->AnsToCmd = FTPDANS_OK226;
+		ftps->count = strlen(okCode226);
+		uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
+		strncpy((char*) (uip_appdata),(char*)(okCode226),uip_len);
+		ftps->IsCmdWD = FALSE;
+		exchgParams.Status = FTPDSTS_NONE;
+		ftps->Status = FTPDSTS_SENDING_ENDDATACTLANS;
+		break;
+	    default: break;
+	    }
+	}
+    }
 }
 
 // test testt test
@@ -560,76 +551,76 @@ unsigned char TSTrtx;
 //END
 void _retrasmit(void)
 {
-TSTrtx++;
+    TSTrtx++;
 }
 
 void _ack(void)
 {
-	struct ftpd_state *ftps = (struct ftpd_state *)(&uip_conn->appstate);
-	switch (ftps->Status) {
-		case FTPDSTS_SENDING_CTLANS:
-			switch (ftps->AnsToCmd) {
-				case FTPDANS_BANNER:
-				case FTPDANS_OK200: 
-				case FTPDANS_OK221: 
-				case FTPDANS_OK230: 
-				case FTPDANS_SYST:
-				case FTPDANS_PWD:
-				case FTPDANS_PASV:
-				case FTPDANS_FAIL502:
-				case FTPDANS_FAIL504:
-				case FTPDANS_SIZE:
-				case FTPDANS_CWD:
-				case FTPDANS_NOOP:
-					ftps->Status = FTPDSTS_WAITFORCMD;
-					ftps->RecvCmd = FTPDREC_NONE;
-					ftps->AnsToCmd = FTPDANS_NONE;
-					uip_len = 0;
-					break;
-				case FTPDANS_LIST:
-				case FTPDANS_RETR:
-					ftps->Status = FTPDSTS_PREP_FTPDATA;
-					uip_len = 0;
-					exchgParams.Status = ftps->Status;
-					exchgParams.RecvCmd = ftps->RecvCmd;
-					exchgParams.AnsToCmd = ftps->AnsToCmd;
-					break;
-				default :
-					break;
-				}
-			break;
-		case FTPDSTS_SENDING_ENDDATACTLANS:
-			switch (ftps->AnsToCmd) {
-				case FTPDANS_OK226:
-					ftps->IsCmdWD = FALSE;
-					ftps->Status = FTPDSTS_WAITFORCMD;
-					ftps->RecvCmd = FTPDREC_NONE;
-					ftps->AnsToCmd = FTPDANS_NONE;
-					break;
-				default :
-					break;
-				}
-			break;
-		default : break;
-		}
+    struct ftpd_state *ftps = (struct ftpd_state *)(&uip_conn->appstate);
+    switch (ftps->Status) {
+    case FTPDSTS_SENDING_CTLANS:
+	switch (ftps->AnsToCmd) {
+	case FTPDANS_BANNER:
+	case FTPDANS_OK200: 
+	case FTPDANS_OK221: 
+	case FTPDANS_OK230: 
+	case FTPDANS_SYST:
+	case FTPDANS_PWD:
+	case FTPDANS_PASV:
+	case FTPDANS_FAIL502:
+	case FTPDANS_FAIL504:
+	case FTPDANS_SIZE:
+	case FTPDANS_CWD:
+	case FTPDANS_NOOP:
+	    ftps->Status = FTPDSTS_WAITFORCMD;
+	    ftps->RecvCmd = FTPDREC_NONE;
+	    ftps->AnsToCmd = FTPDANS_NONE;
+	    uip_len = 0;
+	    break;
+	case FTPDANS_LIST:
+	case FTPDANS_RETR:
+	    ftps->Status = FTPDSTS_PREP_FTPDATA;
+	    uip_len = 0;
+	    exchgParams.Status = ftps->Status;
+	    exchgParams.RecvCmd = ftps->RecvCmd;
+	    exchgParams.AnsToCmd = ftps->AnsToCmd;
+	    break;
+	default :
+	    break;
+	}
+	break;
+    case FTPDSTS_SENDING_ENDDATACTLANS:
+	switch (ftps->AnsToCmd) {
+	case FTPDANS_OK226:
+	    ftps->IsCmdWD = FALSE;
+	    ftps->Status = FTPDSTS_WAITFORCMD;
+	    ftps->RecvCmd = FTPDREC_NONE;
+	    ftps->AnsToCmd = FTPDANS_NONE;
+	    break;
+	default :
+	    break;
+	}
+	break;
+    default : break;
+    }
 /*	SplitCmdArg((char*)uip_appdata,&cmd,&arg);
 	PRINTLN(cmd);
 	PRINTLN(arg);
 	if (!strcmp(cmd,cmd_user_P)) {
-		ftps->Command = FTPDC_SENDOK200;
-		ftps->count = strlen(okCode200);
-		uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
-		strncpy((char*) (uip_appdata),(char*)(okCode200),uip_len);
-		}*/
+	ftps->Command = FTPDC_SENDOK200;
+	ftps->count = strlen(okCode200);
+	uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
+	strncpy((char*) (uip_appdata),(char*)(okCode200),uip_len);
+	}*/
 }
 
 void _senddata(void)
 {
 //	struct arnftpd_state *ftps = (struct arnftpd_state *)(uip_conn->appstate);
-	if (uip_len > 0) {
-		uip_send(uip_appdata,uip_len);
-		//PRINT("Senddata_Handler:\n");
-		}
+    if (uip_len > 0) {
+	uip_send(uip_appdata,uip_len);
+	//PRINT("Senddata_Handler:\n");
+    }
 }
 
 void SplitCmdArg(char * line, char ** cmd, char ** args)
@@ -675,7 +666,7 @@ void _abort_data(void)
 
 void _timeout_data(void)
 {
-	uip_close();
+    uip_close();
 }
 
 void _close_data(void)
@@ -684,11 +675,11 @@ void _close_data(void)
 
 void _connect_data(void)
 {
-	struct ftpd_state *ftps = (struct ftpd_state *)(&uip_conn->appstate);
-	ftps->Status = FTPDSTS_NONE;
-	ftps->RecvCmd = FTPDREC_NONE;
-	ftps->dataptr = 0;
-	ftps->count = 0;
+    struct ftpd_state *ftps = (struct ftpd_state *)(&uip_conn->appstate);
+    ftps->Status = FTPDSTS_NONE;
+    ftps->RecvCmd = FTPDREC_NONE;
+    ftps->dataptr = 0;
+    ftps->count = 0;
 }
 
 // test testt test
@@ -696,31 +687,31 @@ unsigned char TSTrtx_data;
 //END
 void _retrasmit_data(void)
 {
-TSTrtx_data++;
-	struct ftpd_state *ftps = (struct ftpd_state *)(&uip_conn->appstate);
-	switch (ftps->Status) {
-		case FTPDSTS_SENDING_FTPDATA:
-			switch (ftps->RecvCmd) {
-				case FTPDREC_LIST:
-					sprintf((char*)uip_appdata,"-rw-r--r--  1 0 0 %6lu Jan 1 2007 %s\r\n",ftpd_size,ftpd_name);
-					ftps->count = strlen((char*)uip_appdata);
-					uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
-					break;
-				case FTPDREC_RETR:
-					ftps->count += PACK_DATA_SIZE;
-					ftps->dataptr -= PACK_DATA_SIZE;
-					//uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
-					uip_len = ((ftps->count > PACK_DATA_SIZE) ? PACK_DATA_SIZE : ftps->count);
-					memcpy((void*)uip_appdata,(void*)ftps->dataptr,uip_len);
-					if (ftps->count > PACK_DATA_SIZE) ftps->count-= PACK_DATA_SIZE;
-					else ftps->count = 0;
-					ftps->dataptr+= PACK_DATA_SIZE;
-					break;
-				default: break;
-				}
-			break;
-		default : break;
-		}
+    TSTrtx_data++;
+    struct ftpd_state *ftps = (struct ftpd_state *)(&uip_conn->appstate);
+    switch (ftps->Status) {
+    case FTPDSTS_SENDING_FTPDATA:
+	switch (ftps->RecvCmd) {
+	case FTPDREC_LIST:
+	    sprintf((char*)uip_appdata,"-rw-r--r--  1 0 0 %6lu Jan 1 2007 %s\r\n",ftpd_size,ftpd_name);
+	    ftps->count = strlen((char*)uip_appdata);
+	    uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
+	    break;
+	case FTPDREC_RETR:
+	    ftps->count += PACK_DATA_SIZE;
+	    ftps->dataptr -= PACK_DATA_SIZE;
+	    //uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
+	    uip_len = ((ftps->count > PACK_DATA_SIZE) ? PACK_DATA_SIZE : ftps->count);
+	    memcpy((void*)uip_appdata,(void*)ftps->dataptr,uip_len);
+	    if (ftps->count > PACK_DATA_SIZE) ftps->count-= PACK_DATA_SIZE;
+	    else ftps->count = 0;
+	    ftps->dataptr+= PACK_DATA_SIZE;
+	    break;
+	default: break;
+	}
+	break;
+    default : break;
+    }
 }
 
 void _newdata_data(void)
@@ -729,82 +720,82 @@ void _newdata_data(void)
 
 void _ack_data(void)
 {
-	struct ftpd_state *ftps = (struct ftpd_state *)(&uip_conn->appstate);
-	switch (ftps->Status) {
-		case FTPDSTS_SENDING_FTPDATA:
-			switch (ftps->RecvCmd) {
-				case FTPDREC_LIST:
-					uip_close();
-					ftps->Status = FTPDSTS_SENT_FTPDATA;
-					exchgParams.Status = ftps->Status;
-					break;
-				case FTPDREC_RETR:
-					if (!ftps->count) {
-						uip_close();
-						ftps->Status = FTPDSTS_SENT_FTPDATA;
-						exchgParams.Status = ftps->Status;
-						}
-					else {
-						//uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
-						uip_len = ((ftps->count > PACK_DATA_SIZE) ? PACK_DATA_SIZE : ftps->count);
-						memcpy((void*)uip_appdata,(void*)ftps->dataptr,uip_len);
-						if (ftps->count > PACK_DATA_SIZE) ftps->count-= PACK_DATA_SIZE;
-						else ftps->count = 0;
-						ftps->dataptr += PACK_DATA_SIZE;
-						}
-					break;
-				default: break;
-				}
-			break;
-		default: break;
-		}
+    struct ftpd_state *ftps = (struct ftpd_state *)(&uip_conn->appstate);
+    switch (ftps->Status) {
+    case FTPDSTS_SENDING_FTPDATA:
+	switch (ftps->RecvCmd) {
+	case FTPDREC_LIST:
+	    uip_close();
+	    ftps->Status = FTPDSTS_SENT_FTPDATA;
+	    exchgParams.Status = ftps->Status;
+	    break;
+	case FTPDREC_RETR:
+	    if (!ftps->count) {
+		uip_close();
+		ftps->Status = FTPDSTS_SENT_FTPDATA;
+		exchgParams.Status = ftps->Status;
+	    }
+	    else {
+		//uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
+		uip_len = ((ftps->count > PACK_DATA_SIZE) ? PACK_DATA_SIZE : ftps->count);
+		memcpy((void*)uip_appdata,(void*)ftps->dataptr,uip_len);
+		if (ftps->count > PACK_DATA_SIZE) ftps->count-= PACK_DATA_SIZE;
+		else ftps->count = 0;
+		ftps->dataptr += PACK_DATA_SIZE;
+	    }
+	    break;
+	default: break;
+	}
+	break;
+    default: break;
+    }
 }
 
 void _poll_data(void)
 {
-	struct ftpd_state *ftps = (struct ftpd_state *)(&uip_conn->appstate);
-	if (ftps->Status == FTPDSTS_NONE) {
-		if (exchgParams.Status == FTPDSTS_PREP_FTPDATA) {
-			ftps->Status = exchgParams.Status;
-			ftps->RecvCmd = exchgParams.RecvCmd;
-			}
-		}
+    struct ftpd_state *ftps = (struct ftpd_state *)(&uip_conn->appstate);
+    if (ftps->Status == FTPDSTS_NONE) {
+	if (exchgParams.Status == FTPDSTS_PREP_FTPDATA) {
+	    ftps->Status = exchgParams.Status;
+	    ftps->RecvCmd = exchgParams.RecvCmd;
+	}
+    }
 /*	if (exchgParams.Status == FTPDSTS_CLOSING_DATACONN) {
-		exchgParams.Status = FTPDSTS_CLOSED_DATACONN;
-		uip_close();
-		}*/
-	switch (ftps->Status) {
-		case FTPDSTS_PREP_FTPDATA:
-			switch (ftps->RecvCmd) {
-				case FTPDREC_LIST:
-					sprintf((char*)uip_appdata,"-rw-r--r--  1 0 0 %6lu Jan 1 2007 %s\r\n",ftpd_size,ftpd_name);
-					ftps->count = strlen((char*)uip_appdata);
-					uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
-					ftps->Status = FTPDSTS_SENDING_FTPDATA;
-					break;
-				case FTPDREC_RETR:
-					ftps->dataptr = (char*)ftpd_sadd;
-					ftps->count = ftpd_size;
-					//uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
-					uip_len = ((ftps->count > PACK_DATA_SIZE) ? PACK_DATA_SIZE : ftps->count);
-					memcpy((void*)uip_appdata,(void*)ftps->dataptr,uip_len);
-					if (ftps->count > PACK_DATA_SIZE) ftps->count-= PACK_DATA_SIZE;
-					else ftps->count = 0;
-					ftps->dataptr += PACK_DATA_SIZE;
-					ftps->Status = FTPDSTS_SENDING_FTPDATA;
-					break;
-				default: break;
-				}
-			break;
-		default : break;
-		}
+	exchgParams.Status = FTPDSTS_CLOSED_DATACONN;
+	uip_close();
+	}*/
+    switch (ftps->Status) {
+    case FTPDSTS_PREP_FTPDATA:
+	switch (ftps->RecvCmd) {
+	case FTPDREC_LIST:
+	    sprintf((char*)uip_appdata,"-rw-r--r--  1 0 0 %6lu Jan 1 2007 %s\r\n",ftpd_size,ftpd_name);
+	    ftps->count = strlen((char*)uip_appdata);
+	    uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
+	    ftps->Status = FTPDSTS_SENDING_FTPDATA;
+	    break;
+	case FTPDREC_RETR:
+	    ftps->dataptr = (char*)ftpd_sadd;
+	    ftps->count = ftpd_size;
+	    //uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
+	    uip_len = ((ftps->count > PACK_DATA_SIZE) ? PACK_DATA_SIZE : ftps->count);
+	    memcpy((void*)uip_appdata,(void*)ftps->dataptr,uip_len);
+	    if (ftps->count > PACK_DATA_SIZE) ftps->count-= PACK_DATA_SIZE;
+	    else ftps->count = 0;
+	    ftps->dataptr += PACK_DATA_SIZE;
+	    ftps->Status = FTPDSTS_SENDING_FTPDATA;
+	    break;
+	default: break;
+	}
+	break;
+    default : break;
+    }
 }
 
 void _senddata_data(void)
 {
 //	struct arnftpd_state *ftps = (struct arnftpd_state *)(uip_conn->appstate);
-	if (uip_len > 0) {
-		uip_send(uip_appdata,uip_len);
-		//PRINT("Senddata_Handler:\n");
-		}
+    if (uip_len > 0) {
+	uip_send(uip_appdata,uip_len);
+	//PRINT("Senddata_Handler:\n");
+    }
 }

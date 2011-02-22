@@ -34,7 +34,7 @@ CFILES_ENET = \
 	brewbot/network-apps/webserver/httpd-cgi.c \
 	brewbot/network-apps/webserver/phy.c \
 	brewbot/network-apps/memb.c \
-	brewbot/network-apps/ftp.c \
+	brewbot/network-apps/ftpd.c \
 	brewbot/network-apps/telnetd.c \
 	brewbot/network-apps/shell.c \
 	brewbot/network-apps/uIP_Task.c \

@@ -44,8 +44,9 @@
 FATFS Fatfs;
 
 struct ptentry {
-  char *commandstr;
-  void (* pfunc)(char *str);
+    char *commandstr;
+    void (* pfunc)(char *str);
+    int num_args;
 };
 
 #define SHELL_PROMPT "brewbot> "
@@ -69,6 +70,19 @@ static void parse(register char *str, struct ptentry *t)
     if(strncmp(p->commandstr, str, strlen(p->commandstr)) == 0) {
       break;
     }
+  }
+
+  if (p->num_args)
+  {
+      str = strchr(str, ' ');
+      if (str != NULL)
+      {
+	  str++; // skip the space
+      }
+      else
+      {
+	  shell_printf("Need %d arguments", p->num_args);
+      }
   }
 
   p->pfunc(str);
@@ -104,10 +118,10 @@ static void mkfs(char *str)
     shell_output(message, "");
 }
 
-FIL File1, File2;
 
 static void _write(char *str)
 {
+FIL File1;
     UINT ByteWritten;
     FRESULT result  = f_open(&File1, "0:test.txt", FA_OPEN_ALWAYS | FA_WRITE);
     char message[20];
@@ -121,60 +135,163 @@ static void _write(char *str)
     f_close(&File1);
 }
 
-static void _read(char *str)
+static void ls(char * str)
 {
-    UINT BytesRead;
-    char buffer[30];
-    FRESULT result  = f_open(&File1, "0:test.txt", FA_READ);
-    char message[20];
-    sprintf(message,"result %d", result);
-    shell_output(message, "");
+    DIR dir;
+    FILINFO fno;
+    char *fn;
+    FATFS *fs;
+    DWORD fre_clust, fre_sect, tot_sect;
 
-    result = f_read(&File1, buffer, 12, &BytesRead);
-    sprintf(message,"result %d %d", result, BytesRead);
-    shell_output(message, "");
-    shell_output(buffer, "");
 
-    f_close(&File1);
+#if _USE_LFN
+    static char lfn[_MAX_LFN * (_DF1S ? 2 : 1) + 1];
+    fno.lfname = lfn;
+    fno.lfsize = sizeof(lfn);
+#endif
+
+    FRESULT result = f_opendir (&dir, "");
+    if (result != FR_OK)
+    {
+	shell_printf("Opendir failed %x", result);
+	return;
+    }
+
+    for (;;) {
+	result = f_readdir(&dir, &fno);
+	if (result != FR_OK || fno.fname[0] == 0) break;
+	if (fno.fname[0] == '.') continue;
+#if _USE_LFN
+	fn = *fno.lfname ? fno.lfname : fno.fname;
+#else
+	fn = fno.fname;
+#endif
+	shell_printf("%s%s", fn, (fno.fattrib & AM_DIR) ? "/" : "");
+    }
+
+    /* Get volume information and free clusters of drive 1 */
+    result = f_getfree("0:", &fre_clust, &fs);
+    if (result)
+    {
+	shell_printf("getfree failed %x", result);
+	return;
+    }
+
+    /* Get total sectors and free sectors */
+    tot_sect = (fs->n_fatent - 2) * fs->csize;
+    fre_sect = fre_clust * fs->csize;
+
+    /* Print free space in unit of KB (assuming 512 bytes/sector) */
+    shell_printf("%lu KB total drive space.\n"
+		 "%lu KB available.\n",
+		 fre_sect / 2, tot_sect / 2);
+
 }
 
-static void test(char * str)
+static void mkdir(char * str)
 {
-    uint8_t buffer[138];
-    int ii;
-
-    for (ii = 0; ii < sizeof(buffer); ii++)
+    FRESULT result  = f_mkdir(str);
+    if (result != FR_OK)
     {
-	buffer[ii] = ii;
+	shell_printf("mkdir failed %x", result);
+    }
+}
+
+static void cd(char *str)
+{
+    FRESULT result = f_chdir(str);
+
+    shell_printf("change to %s", str);
+
+    if (result != FR_OK)
+    {
+	shell_printf("chdir failed %x", result);
+    }    
+}
+
+char buffer[80];
+
+static void pwd(char *str)
+{
+    FRESULT result  = f_getcwd(buffer, sizeof(buffer));
+    if (result != FR_OK)
+    {
+	shell_printf("pwd failed %x", result);
+	return;
+    }
+    shell_printf("%s", buffer);
+}
+
+
+static void cat(char *str)
+{
+    FIL File1;
+    FRESULT result;
+    char *name = str;
+    int flags = FA_READ;
+
+    if (name[0] == '>')
+    {
+	name++;
+	flags = FA_CREATE_ALWAYS | FA_WRITE;
+	if (name[0] == '>')
+	{
+	    name++;
+	    flags = FA_OPEN_ALWAYS | FA_WRITE;
+	}
+
+	while (*name++ == ' '); // skip the whitespace
     }
 
-    flash_write(0x1000, buffer, sizeof(buffer));
-    flash_read(0x1000, buffer, sizeof(buffer));
-
-    for (ii = 0; ii < sizeof(buffer) / 10; ii++)
+    result = f_open(&File1, name, flags);
+    if (result != FR_OK)
     {
-	shell_printf("%d %d %d %d %d %d %d %d %d %d",
-		     buffer[ii * 10 + 0], buffer[ii * 10 + 1], buffer[ii * 10 + 2], buffer[ii * 10 + 3], buffer[ii * 10 + 4],
-		     buffer[ii * 10 + 5], buffer[ii * 10 + 6], buffer[ii * 10 + 7], buffer[ii * 10 + 8], buffer[ii * 10 + 9]);
+	shell_printf("Open failed %x", result);
+	return;	
+    }
+    
+    if (flags & FA_OPEN_ALWAYS)
+    {
+	result = f_lseek(&File1, File1.fsize);
+	if (result != FR_OK)
+	{
+	    shell_printf("Seek failed %x", result);
+	    f_close(&File1);
+	    return;
+	}
+    }
+
+    if (flags & FA_WRITE)
+    {
 
     }
+    else
+    {
+	while (f_gets (buffer, sizeof(buffer), &File1) != NULL)
+	{
+	    shell_printf("%s\n", buffer);
+	}
+    }
+
+    f_close(&File1);    
 }
 
 /*---------------------------------------------------------------------------*/
 static struct ptentry parsetab[] =
-  {{"stats", help},
-   {"conn", help},
-   {"help", help},
-   {"mount", mount},
-   {"mkfs", mkfs},
-   {"read", _read},
-   {"write", _write},
-   {"test", test},
-   {"exit", shell_quit},
-   {"?", help},
-
-   /* Default action */
-   {NULL, unknown}};
+    {{"stats", help, 0},
+     {"conn", help, 0},
+     {"help", help, 0},
+     {"mount", mount, 0},
+     {"mkfs", mkfs, 0},
+     {"mkdir", mkdir, 1},
+     {"cd",    cd, 1},
+     {"cat",   cat, 1},
+     {"pwd",   pwd, 0},
+     {"exit", shell_quit, 0},
+     {"ls",   ls, 0},
+     {"?", help},
+     {NULL, unknown}
+};
 /*---------------------------------------------------------------------------*/
 void shell_init(void)
 {

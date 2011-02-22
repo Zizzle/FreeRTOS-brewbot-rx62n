@@ -67,6 +67,7 @@
 #include "net/clock-arch.h"
 #include "r_ether.h"
 #include "network-apps/telnetd.h"
+#include "network-apps/ftpd.h"
 
 /*-----------------------------------------------------------*/
 
@@ -131,6 +132,8 @@ struct timer periodic_timer, arp_timer;
 
 	httpd_init();
 	telnetd_init();
+	ftpd_init();
+	ftpd_init_data();
 
 	/* Create the semaphore used to wake the uIP task. */
 	vSemaphoreCreateBinary( xEMACSemaphore );
@@ -274,13 +277,19 @@ void httpd_appcall( void );
 
 void uip_tcp_appcall(void)
 {
-  switch(uip_conn->lport)
-  {
-  case HTONS(23):
-     telnetd_appcall();
-     break;
-  case HTONS(80):
-     httpd_appcall();
-     break;
-  }
+    switch(uip_conn->lport)
+    {
+    case HTONS(21):
+	ftpd_appcall();
+	break;
+    case HTONS(20):
+	ftpd_appcall_data();
+	break;
+    case HTONS(23):
+	telnetd_appcall();
+	break;
+    case HTONS(80):
+	httpd_appcall();
+	break;
+    }
 }
