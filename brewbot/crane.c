@@ -39,12 +39,12 @@ static void crane_start(brew_task_t *bt)
 	bt->maxRunTime = UP_DOWN_TIMEOUT * configTICK_RATE_HZ;
 	break;
     case DIRECTION_LEFT:
-	outputOn  (MOTOR_DIR);
+	outputOff  (MOTOR_DIR);
 	outputOn  (MOTOR_CRANE_X);
 	bt->maxRunTime = LEFT_RIGHT_TIMEOUT * configTICK_RATE_HZ;
 	break;
     case DIRECTION_RIGHT:
-	outputOff (MOTOR_DIR);
+	outputOn (MOTOR_DIR);
 	outputOn  (MOTOR_CRANE_X);
 	bt->maxRunTime = LEFT_RIGHT_TIMEOUT * configTICK_RATE_HZ;
 	break;
