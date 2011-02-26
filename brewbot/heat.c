@@ -18,13 +18,19 @@ static void allOff()
 {
     outputOff(SSR);
     SSR_DDR = 1;
+
+    // turn on power to the ds1820
+    PORT4.DR.BIT.B1 = 1;
+    PORT4.DDR.BIT.B1 = 1;
 }
 
 static void display_status()
 {
     lcd_printf(0, 4, 19, "Target temp %.1f (%d)", heat_target, heat_target_reached);
-    lcd_printf(0, 5, 18, "Temp %.2f (%d%%)",
+    lcd_printf(0, 5, 18, "Temp %.2f (%d%)",
 	       (double)ds1820_get_temperature(), heat_duty_cycle);
+    lcd_printf(0,6, 19, "Probe: %d %d",level_hit_heat(), level_probe_heat_adc());
+    lcd_printf(0, 7, 19, "Target hit %d", heat_target_reached);
 }
 
 static void heatTask( void *pvParameters )

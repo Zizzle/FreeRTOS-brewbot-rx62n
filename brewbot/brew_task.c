@@ -46,7 +46,10 @@ static void brewTask( void *pvParameters )
 
 	    // check to see if we have received a stop message
 	    if (pdTRUE == xQueueReceive(bt->startStopQueue, &ss, 1) && ss == STOP) // wait 1 tick
+	    {
+		lcd_printf(0, 6, 19, "Stop");
 		break;
+	    }
 
 	    // check to see if the job has run too long
 	    if (xTaskGetTickCount() - bt->startTick > bt->maxRunTime)
@@ -55,6 +58,8 @@ static void brewTask( void *pvParameters )
 		break;
 	    }
 	}
+
+	lcd_printf(0, 4, 19, "done %s", bt->error);
 
 	if (bt->taskErrorHandler && bt->error)
 	    bt->taskErrorHandler(bt);
@@ -67,7 +72,8 @@ static void brewTask( void *pvParameters )
 }
 
 void startBrewTask(brew_task_t *task,
-		   const char *name, int stackSize, int priority, int maxRunTime,
+		   const char *name, int stackSize,
+		   int priority, portTickType maxRunTime,
 		   void (*taskStartCallback)(brew_task_t *),
 		   void (*taskIterationCallback)(brew_task_t *),
 		   void (*taskStopCallback)(brew_task_t *))
@@ -77,6 +83,7 @@ void startBrewTask(brew_task_t *task,
     task->taskStart      = taskStartCallback;
     task->taskIteration  = taskIterationCallback;
     task->taskStop       = taskStopCallback;
+    task->maxRunTime     = maxRunTime;
 
     xTaskCreate( brewTask,
 		 (const signed char *) name,

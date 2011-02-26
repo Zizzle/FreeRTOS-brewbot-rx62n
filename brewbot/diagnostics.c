@@ -189,29 +189,37 @@ static void diag_hops(int initializing)
 
 static int diag_hops_key(unsigned char key)
 {
+    static int pos = 0;
+
     if (upKeyPressed(key))
     {
-	servo_set_pos(0, 180);
-	vTaskDelay(1000); // wait for the hops to fall
-	servo_set_pos(0, 0);
+	servo_set_pos(0, pos);
+	pos += 5;
+//	servo_set_pos(0, 180);
+//	vTaskDelay(1000); // wait for the hops to fall
+//	servo_set_pos(0, 0);
     }
     else if (downKeyPressed(key))
     {
-	servo_set_pos(1, 180);
-	vTaskDelay(1000); // wait for the hops to fall
-	servo_set_pos(1, 0);
+	servo_set_pos(0, pos--);
+	pos -= 5;
+//	servo_set_pos(1, 180);
+//	vTaskDelay(1000); // wait for the hops to fall
+//	servo_set_pos(1, 0);
     }
     else if (leftKeyPressed(key))
     {
-	servo_set_pos(2, 180);
-	vTaskDelay(1000); // wait for the hops to fall
-	servo_set_pos(2, 0);
+//	servo_set_pos(2, 180);
+//	vTaskDelay(1000); // wait for the hops to fall
+//	servo_set_pos(2, 0);
 
     }
     else if (leftKeyPressed(key))
     {
 
     }
+
+    lcd_printf(0, 5, 19, "pos %d", pos);
 
     return 1;
 }
@@ -228,11 +236,16 @@ static void diag_levels(int initializing)
     }
 }
 
+void fill_error_handler(brew_task_t *bt)
+{
+    lcd_printf(0,5, 19, "Error: %s", bt->error);
+}
+
 static int diag_level_key(unsigned char key)
 {
     if (rightKeyPressed(key))
     {
-	fill_start(NULL);
+	fill_start(fill_error_handler);
     }
     return 0;
 }

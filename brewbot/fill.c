@@ -19,7 +19,7 @@
 #include "level_probes.h"
 #include "brew_task.h"
 
-#define MAX_FILL_TIME 100 * 1000
+#define MAX_FILL_TIME (600 * 1000)
 
 brew_task_t fill_task;
 

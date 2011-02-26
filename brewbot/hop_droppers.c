@@ -54,8 +54,8 @@ void vTimer2_ISR_Handler( void )
 void vSetupHighFrequencyTimer( void )
 {
     HOP_DROPPER_1_DDR = 1;
-    HOP_DROPPER_2_DDR = 1;
-    HOP_DROPPER_3_DDR = 1;
+//    HOP_DROPPER_2_DDR = 1;
+//    HOP_DROPPER_3_DDR = 1;
 
 	MSTP( CMT2 ) = 0;
 	

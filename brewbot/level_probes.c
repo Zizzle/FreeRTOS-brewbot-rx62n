@@ -28,7 +28,7 @@
 // application samples it occasionally.
 //
 
-#define THRESHOLD 3000
+#define THRESHOLD 3500
 
 void level_probe_init()
 {

@@ -30,7 +30,8 @@ struct brew_task
 };
 
 void startBrewTask(brew_task_t *task,
-		   const char *name, int stackSize, int priority, int maxRunTime,
+		   const char *name, int stackSize,
+		   int priority, portTickType maxRunTime,
 		   void (*taskStartCallback)(brew_task_t *),
 		   void (*taskIterationCallback)(brew_task_t *),
 		   void (*taskStopCallback)(brew_task_t *));

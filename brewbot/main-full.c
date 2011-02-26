@@ -11,6 +11,7 @@
 #include "brew.h"
 #include "fill.h"
 #include "level_probes.h"
+#include "fatfs/ff.h"
 
 /* Priorities at which the tasks are created. */
 #define mainCHECK_TASK_PRIORITY		( configMAX_PRIORITIES - 1 )
@@ -83,10 +84,14 @@ struct menu main_menu[] =
     {NULL, NULL, NULL, NULL}
 };
 
+FATFS Fatfs;
+
 /*-----------------------------------------------------------*/
 
 int main(void)
 {
+    FRESULT mount_result;
+
     extern void HardwareSetup( void );
 
     /* Renesas provided CPU configuration routine.  The clocks are configured in
@@ -95,6 +100,9 @@ int main(void)
 
     spi_open();
     lcd_open();
+
+    mount_result  = f_mount (0, &Fatfs);
+
     level_probe_init(); // Kick off the ADC continuosly running
     lcd_set_address(0, 0);
     settings_load();
@@ -109,6 +117,7 @@ int main(void)
     brew_start_task();
     vSetupHighFrequencyTimer();
 
+    lcd_printf(0, 6, 19, "FatFS: %s",  mount_result == 0 ? "OK" : "failed");
     lcd_printf(0, 7, 19, "IP: %d.%d.%d.%d", configIP_ADDR0, configIP_ADDR1, configIP_ADDR2, configIP_ADDR3);
 
     /* Start the tasks running. */

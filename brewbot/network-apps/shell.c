@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright (c) 2003, Adam Dunkels.
  * All rights reserved.
  *
@@ -41,7 +41,8 @@
 #include "p5q.h"
 
 #include "fatfs/ff.h"
-FATFS Fatfs;
+
+extern FATFS Fatfs;
 
 struct ptentry {
     char *commandstr;
@@ -65,51 +66,45 @@ void shell_printf(const char *fmt, ...)
 /*---------------------------------------------------------------------------*/
 static void parse(register char *str, struct ptentry *t)
 {
-  struct ptentry *p;
-  for(p = t; p->commandstr != NULL; ++p) {
-    if(strncmp(p->commandstr, str, strlen(p->commandstr)) == 0) {
-      break;
+    struct ptentry *p;
+    for(p = t; p->commandstr != NULL; ++p) {
+	if(strncmp(p->commandstr, str, strlen(p->commandstr)) == 0) {
+	    break;
+	}
     }
-  }
 
-  if (p->num_args)
-  {
-      str = strchr(str, ' ');
-      if (str != NULL)
-      {
-	  str++; // skip the space
-      }
-      else
-      {
-	  shell_printf("Need %d arguments", p->num_args);
-      }
-  }
+    if (p->num_args)
+    {
+	str = strchr(str, ' ');
+	if (str != NULL)
+	{
+	    str++; // skip the space
+	}
+	else
+	{
+	    shell_printf("Need %d arguments", p->num_args);
+	}
+    }
 
-  p->pfunc(str);
+    p->pfunc(str);
 }
 /*---------------------------------------------------------------------------*/
 static void help(char *str)
 {
-  shell_output("Available commands:", "");
-  shell_output("stats   - show network statistics", "");
-  shell_output("conn    - show TCP connections", "");
-  shell_output("help, ? - show help", "");
-  shell_output("exit    - exit shell", "");
+    shell_output("Available commands:", "");
+    shell_output("stats   - show network statistics", "");
+    shell_output("conn    - show TCP connections", "");
+    shell_output("help, ? - show help", "");
+    shell_output("exit    - exit shell", "");
 }
 /*---------------------------------------------------------------------------*/
 static void unknown(char *str)
 {
-  if(strlen(str) > 0) {
-    shell_output("Unknown command: ", str);
-  }
+    if(strlen(str) > 0) {
+	shell_output("Unknown command: ", str);
+    }
 }
-static void mount(char *str)
-{
-    FRESULT result  = f_mount (0, &Fatfs);
-    char message[20];
-    sprintf(message,"result %d", result);
-    shell_output(message, "");
-}
+
 static void mkfs(char *str)
 {
     FRESULT result  = f_mkfs (0, 1, 1024);
@@ -121,7 +116,7 @@ static void mkfs(char *str)
 
 static void _write(char *str)
 {
-FIL File1;
+    FIL File1;
     UINT ByteWritten;
     FRESULT result  = f_open(&File1, "0:test.txt", FA_OPEN_ALWAYS | FA_WRITE);
     char message[20];
@@ -278,19 +273,19 @@ static void cat(char *str)
 
 /*---------------------------------------------------------------------------*/
 static struct ptentry parsetab[] =
-    {{"stats", help, 0},
-     {"conn", help, 0},
-     {"help", help, 0},
-     {"mount", mount, 0},
-     {"mkfs", mkfs, 0},
-     {"mkdir", mkdir, 1},
-     {"cd",    cd, 1},
-     {"cat",   cat, 1},
-     {"pwd",   pwd, 0},
-     {"exit", shell_quit, 0},
-     {"ls",   ls, 0},
-     {"?", help},
-     {NULL, unknown}
+{
+    {"stats", help, 0},
+    {"conn", help, 0},
+    {"help", help, 0},
+    {"mkfs", mkfs, 0},
+    {"mkdir", mkdir, 1},
+    {"cd",    cd, 1},
+    {"cat",   cat, 1},
+    {"pwd",   pwd, 0},
+    {"exit", shell_quit, 0},
+    {"ls",   ls, 0},
+    {"?", help},
+    {NULL, unknown}
 };
 /*---------------------------------------------------------------------------*/
 void shell_init(void)
@@ -299,14 +294,14 @@ void shell_init(void)
 /*---------------------------------------------------------------------------*/
 void shell_start(void)
 {
-  shell_output("uIP command shell", "");
-  shell_output("Type '?' and return for help", "");
-  shell_prompt(SHELL_PROMPT);
+    shell_output("uIP command shell", "");
+    shell_output("Type '?' and return for help", "");
+    shell_prompt(SHELL_PROMPT);
 }
 /*---------------------------------------------------------------------------*/
 void shell_input(char *cmd)
 {
-  parse(cmd, parsetab);
-  shell_prompt(SHELL_PROMPT);
+    parse(cmd, parsetab);
+    shell_prompt(SHELL_PROMPT);
 }
 /*---------------------------------------------------------------------------*/
