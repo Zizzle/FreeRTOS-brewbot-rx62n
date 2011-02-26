@@ -60,6 +60,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "fatfs/ff.h"
+#include "lcd.h"
 
 //#define DEBUG
 #ifdef DEBUG
@@ -419,7 +420,7 @@ void _newdata(void)
 	FRESULT result = f_open(&file, arg, FA_WRITE | FA_CREATE_ALWAYS);
 	if (result == FR_OK)
 	{
-	    prep_response(ftps, "150 opening data connection for retr answer.\r\n", FTPDREC_STOR, FTPDANS_STOR, FTPDSTS_SENDING_CTLANS);
+	    prep_response(ftps, "150 opening data connection for stor.\r\n", FTPDREC_STOR, FTPDANS_STOR, FTPDSTS_SENDING_CTLANS);
 	    ftps->IsCmdWD = TRUE;
 	}
 	else
@@ -455,6 +456,7 @@ void _poll(void)
 	    switch (ftps->AnsToCmd) {
 	    case FTPDANS_LIST:
 	    case FTPDANS_RETR:
+	    case FTPDANS_STOR:
 		ftps->AnsToCmd = FTPDANS_OK226;
 		ftps->count = strlen(okCode226);
 		uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
@@ -650,6 +652,7 @@ static void transmit_data(struct ftpd_state *ftps)
 
 void _abort_data(void)
 {
+
 }
 
 void _timeout_data(void)
@@ -662,8 +665,11 @@ void _close_data(void)
     struct ftpd_state *ftps = (struct ftpd_state *)(&uip_conn->appstate);
 
     switch (ftps->Status) {
+    case FTPDSTS_PREP_FTPDATA:
     case FTPDSTS_RECV_DATA:
 	f_close(&file);
+	ftps->Status = FTPDSTS_SENT_FTPDATA;
+	exchgParams.Status = ftps->Status;
 	break;
     }
 }
@@ -674,6 +680,11 @@ void _connect_data(void)
     ftps->Status = FTPDSTS_NONE;
     ftps->RecvCmd = FTPDREC_NONE;
     ftps->count = 0;
+
+    if (exchgParams.Status == FTPDSTS_PREP_FTPDATA) {
+	ftps->Status = exchgParams.Status;
+	ftps->RecvCmd = exchgParams.RecvCmd;
+    }
 }
 
 // test testt test
@@ -738,8 +749,14 @@ void _poll_data(void)
 
 void _newdata_data(void)
 {
-#if 0
     struct ftpd_state *ftps = (struct ftpd_state *)(&uip_conn->appstate);
+    if (ftps->Status == FTPDSTS_NONE) {
+	if (exchgParams.Status == FTPDSTS_PREP_FTPDATA) {
+	    ftps->Status = exchgParams.Status;
+	    ftps->RecvCmd = exchgParams.RecvCmd;
+	}
+    }
+
     UINT written;
     switch (ftps->Status) {
     case FTPDSTS_PREP_FTPDATA:
@@ -751,7 +768,8 @@ void _newdata_data(void)
 	f_write(&file, uip_appdata, uip_len, &written);
 	break;
     }
-#endif
+
+    uip_len = 0;
 }
 
 void _ack_data(void)
@@ -801,9 +819,6 @@ void ftpd_appcall_data(void)
     if(uip_timedout()) {
 	_timeout_data();
     }
-    if(uip_closed()) {
-	_close_data();
-    }
     if(uip_connected()) {
 	_connect_data();
     }
@@ -825,5 +840,8 @@ void ftpd_appcall_data(void)
        uip_connected() ||
        uip_poll()) {
 	_senddata_data();
+    }
+    if(uip_closed()) {
+	_close_data();
     }
 }
