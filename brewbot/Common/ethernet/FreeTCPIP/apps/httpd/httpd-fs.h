@@ -35,12 +35,15 @@
 #ifndef __HTTPD_FS_H__
 #define __HTTPD_FS_H__
 
-#define HTTPD_FS_STATISTICS 1
+//#define HTTPD_FS_STATISTICS 1
+
+#include "fatfs/ff.h"
 
 struct httpd_fs_file
 {
-	char	*data;
 	int		len;
+
+        FIL     fat_file;
 };
 
 /* file must be allocated by caller and will be filled in

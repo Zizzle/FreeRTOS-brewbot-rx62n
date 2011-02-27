@@ -66,7 +66,7 @@ static void fill(brew_task_t *bt)
 void start_fill_task()
 {
     startBrewTask(&fill_task,
-		  "Fill Task", 200, 5, MAX_FILL_TIME,
+		  "Fill", 200, 5, MAX_FILL_TIME,
 		  fill_job_start_stop,
 		  fill,
 		  fill_job_start_stop);

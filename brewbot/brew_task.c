@@ -47,19 +47,16 @@ static void brewTask( void *pvParameters )
 	    // check to see if we have received a stop message
 	    if (pdTRUE == xQueueReceive(bt->startStopQueue, &ss, 1) && ss == STOP) // wait 1 tick
 	    {
-		lcd_printf(0, 6, 19, "Stop");
 		break;
 	    }
 
 	    // check to see if the job has run too long
 	    if (xTaskGetTickCount() - bt->startTick > bt->maxRunTime)
 	    {
-		bt->error = "Timeout filling";
+		bt->error = "Timeout";
 		break;
 	    }
 	}
-
-	lcd_printf(0, 4, 19, "done %s", bt->error);
 
 	if (bt->taskErrorHandler && bt->error)
 	    bt->taskErrorHandler(bt);

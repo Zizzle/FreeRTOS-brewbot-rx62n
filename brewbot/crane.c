@@ -54,16 +54,6 @@ static void crane_start(brew_task_t *bt)
 
 static void crane_iteration(brew_task_t *bt)
 {
-    lcd_string(6,0, "sw: ");
-
-    lcd_display_number(CRANE_END_SW_LEFT);
-    lcd_display_char(' ');
-    lcd_display_number(CRANE_END_SW_RIGHT);
-    lcd_display_char(' ');
-    lcd_display_number(CRANE_END_SW_UP);
-    lcd_display_char(' ');
-    lcd_display_number(CRANE_END_SW_DOWN);
-
     if ((crane_direction == DIRECTION_UP    && CRANE_END_SW_UP == 0) ||
 	(crane_direction == DIRECTION_DOWN  && CRANE_END_SW_DOWN == 0) ||
 	(crane_direction == DIRECTION_LEFT  && CRANE_END_SW_LEFT == 0) ||
@@ -85,7 +75,7 @@ static void crane_stop_(brew_task_t *bt)
 void start_crane_task()
 {
     startBrewTask(&crane_task,
-		  "Crane Task", 200, 5, 1000000,
+		  "Crane", 200, 5, 1000000,
 		  crane_start,
 		  crane_iteration,
 		  crane_stop_);
@@ -110,3 +100,22 @@ void crane_stop()
     brewTaskStop(&crane_task);    
 }
 
+uint8_t crane_is_at_left()
+{
+    return CRANE_END_SW_LEFT == 0;
+}
+
+uint8_t crane_is_at_right()
+{
+    return CRANE_END_SW_RIGHT == 0;
+}
+
+uint8_t crane_is_at_top()
+{
+    return CRANE_END_SW_UP == 0;
+}
+
+uint8_t crane_is_at_bottom()
+{
+    return CRANE_END_SW_DOWN == 0;
+}

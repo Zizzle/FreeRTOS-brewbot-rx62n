@@ -22,6 +22,11 @@
 static float heat_target = 66.0f;
 static int   heat_duty   = 50;
 
+void diag_error_handler(brew_task_t *bt)
+{
+    lcd_printf(0,5, 19, "Error: %s", bt->error);
+}
+
 //----------------------------------------------------------------------------
 static void diag_heat(int initializing)
 {
@@ -30,13 +35,13 @@ static void diag_heat(int initializing)
 	lcd_text(0, 1, "Heat diagnostic");
 	lcd_text(0, 2, "/\\ \\/ = target temp");
 	lcd_text(0, 3, "< > = duty cycle");
-	setHeatTargetTemperature(heat_target);
-	setHeatDutyCycle(heat_duty);
-	startHeatTask();
+	heat_start(diag_error_handler);
+	heat_set_target_temperature(heat_target);
+	heat_set_dutycycle(heat_duty);
     }
     else
     {
-	stopHeatTask();
+	heat_stop();
     }
 }
 
@@ -67,8 +72,8 @@ static int diag_heat_key(unsigned char key)
 	else
 	    heat_duty += 10;
     }
-    setHeatTargetTemperature(heat_target);
-    setHeatDutyCycle(heat_duty);
+    heat_set_target_temperature(heat_target);
+    heat_set_dutycycle(heat_duty);
     return 1; // signal that we consume the left key, double click needed to exit
 }
 //----------------------------------------------------------------------------
@@ -103,6 +108,46 @@ static int diag_crane_key(unsigned char key)
     else if (rightKeyPressed(key))
     {
 	crane_move(DIRECTION_RIGHT, NULL);
+    }
+
+    return 1;
+}
+//----------------------------------------------------------------------------
+static void diag_crane_man(int initializing)
+{
+    if (initializing)
+    {
+	lcd_text(0, 1, "Crane diagnostic");
+	lcd_text(0, 2, "/\\ \\/ = up down");
+	lcd_text(0, 3, "< > = left right");
+    }
+    else
+    {
+	crane_stop();
+    }
+}
+
+static int diag_crane_man_key(unsigned char key)
+{
+    if (upKeyPressed(key))
+    {
+	crane_move(DIRECTION_UP, NULL);
+    }
+    else if (downKeyPressed(key))
+    {
+	crane_move(DIRECTION_DOWN, NULL);
+    }
+    else if (leftKeyPressed(key))
+    {
+	crane_move(DIRECTION_LEFT, NULL);
+    }
+    else if (rightKeyPressed(key))
+    {
+	crane_move(DIRECTION_RIGHT, NULL);
+    }
+    else if (!(key & KEY_PRESSED))
+    {
+	crane_stop();
     }
 
     return 1;
@@ -189,37 +234,22 @@ static void diag_hops(int initializing)
 
 static int diag_hops_key(unsigned char key)
 {
-    static int pos = 0;
-
     if (upKeyPressed(key))
     {
-	servo_set_pos(0, pos);
-	pos += 5;
-//	servo_set_pos(0, 180);
-//	vTaskDelay(1000); // wait for the hops to fall
-//	servo_set_pos(0, 0);
+	hops_drop(0, diag_error_handler);
     }
     else if (downKeyPressed(key))
     {
-	servo_set_pos(0, pos--);
-	pos -= 5;
-//	servo_set_pos(1, 180);
-//	vTaskDelay(1000); // wait for the hops to fall
-//	servo_set_pos(1, 0);
+	hops_drop(2, diag_error_handler);
     }
-    else if (leftKeyPressed(key))
+    else if (rightKeyPressed(key))
     {
-//	servo_set_pos(2, 180);
-//	vTaskDelay(1000); // wait for the hops to fall
-//	servo_set_pos(2, 0);
-
+	hops_drop(1, diag_error_handler);
     }
     else if (leftKeyPressed(key))
     {
 
     }
-
-    lcd_printf(0, 5, 19, "pos %d", pos);
 
     return 1;
 }
@@ -236,16 +266,11 @@ static void diag_levels(int initializing)
     }
 }
 
-void fill_error_handler(brew_task_t *bt)
-{
-    lcd_printf(0,5, 19, "Error: %s", bt->error);
-}
-
 static int diag_level_key(unsigned char key)
 {
     if (rightKeyPressed(key))
     {
-	fill_start(fill_error_handler);
+	fill_start(diag_error_handler);
     }
     return 0;
 }
@@ -254,10 +279,11 @@ static int diag_level_key(unsigned char key)
 struct menu diag_menu[] =
 {
      {"Heat",           NULL,              diag_heat,      diag_heat_key},
-     {"Crane",          NULL,              diag_crane,     diag_crane_key},
+     {"Crane Manual",   NULL,              diag_crane_man, diag_crane_man_key},
+     {"Crane Auto",     NULL,              diag_crane,     diag_crane_key},
      {"Mash stirrer",   NULL,              diag_mash,      diag_mash_key},
      {"Solenoid",       NULL,              solenoid_pulse, solenoid_pulse_key},
      {"Hops",           NULL,              diag_hops,      diag_hops_key},
-     {"Level sensors",  NULL,              diag_levels,    diag_level_key},
+     {"Water fill",     NULL,              diag_levels,    diag_level_key},
      {NULL, NULL, NULL, NULL}
 };

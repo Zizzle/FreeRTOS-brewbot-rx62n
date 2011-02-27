@@ -52,6 +52,7 @@
 #include "task.h"
 
 #include "settings.h"
+#include "recipes.h"
 
 HTTPD_CGI_CALL( file, "file-stats", file_stats );
 HTTPD_CGI_CALL( tcp, "tcp-connections", tcp_stats );
@@ -60,7 +61,9 @@ HTTPD_CGI_CALL( rtos, "rtos-stats", rtos_stats );
 HTTPD_CGI_CALL( run, "run-time", run_time );
 HTTPD_CGI_CALL( io, "led-io", led_io );
 
-static const struct httpd_cgi_call	*calls[] = { &file, &tcp, &net, &rtos, &run, &io, NULL };
+HTTPD_CGI_CALL( recipes, "show-recipes", show_recipes);
+
+static const struct httpd_cgi_call	*calls[] = { &file, &tcp, &net, &rtos, &run, &io, &recipes, NULL };
 
 /*---------------------------------------------------------------------------*/
 static PT_THREAD( nullfunction ( struct httpd_state *s, char *ptr ) )
@@ -91,8 +94,7 @@ httpd_cgifunction httpd_cgi( char *name )
 /*---------------------------------------------------------------------------*/
 static unsigned short generate_file_stats( void *arg )
 {
-	char	*f = ( char * ) arg;
-	return sprintf( ( char * ) uip_appdata, "%5u", httpd_fs_count(f) );
+	return sprintf( ( char * ) uip_appdata, "%5u", 0 );
 }
 
 /*---------------------------------------------------------------------------*/
@@ -203,9 +205,11 @@ static PT_THREAD( rtos_stats ( struct httpd_state *s, char *ptr ) )
 char			*pcStatus;
 unsigned long	ulString;
 
+#if 0
+
 static unsigned short generate_io_state( void *arg )
 {
-#if 0
+//#if 0
 	extern long lParTestGetLEDState( unsigned long ulLED );
 	( void ) arg;
 
@@ -218,35 +222,28 @@ static unsigned short generate_io_state( void *arg )
 	{
 		pcStatus = "";
 	}
-#endif
+//#endif
 	pcStatus = "?";
 	sprintf( uip_appdata, "<input type=\"checkbox\" name=\"LED0\" value=\"1\" %s>LED<p><p>", pcStatus );
 
 	return strlen( uip_appdata );
 }
 
+#endif
+
 /*---------------------------------------------------------------------------*/
 extern void vTaskGetRunTimeStats( signed char *pcWriteBuffer );
-extern unsigned short usMaxJitter;
-static char cJitterBuffer[ 200 ];
+//extern unsigned short usMaxJitter;
+//static char cJitterBuffer[ 200 ];
 static unsigned short generate_runtime_stats( void *arg )
 {
 	( void ) arg;
 	lRefreshCount++;
 	sprintf( cCountBuf, "<p><br>Refresh count = %d", ( int ) lRefreshCount );
 	
-	#ifdef INCLUDE_HIGH_FREQUENCY_TIMER_TEST
-	{
-		sprintf( cJitterBuffer, "<p><br>Max high frequency timer jitter = %d peripheral clock periods.<p><br>", ( int ) usMaxJitter );
+//		sprintf( cJitterBuffer, "<p><br>Max high frequency timer jitter = %d peripheral clock periods.<p><br>", ( int ) usMaxJitter );
 		vTaskGetRunTimeStats( uip_appdata );
-		strcat( uip_appdata, cJitterBuffer );
-	}
-	#else
-	{
-		( void ) cJitterBuffer;
-		strcpy( uip_appdata, "<p>Run time stats are only available in the debug_with_optimisation build configuration.<p>" );
-	}
-	#endif	
+//		strcat( uip_appdata, cJitterBuffer );
 
 	strcat( uip_appdata, cCountBuf );
 
@@ -270,5 +267,16 @@ static PT_THREAD( led_io ( struct httpd_state *s, char *ptr ) )
 	( void ) ptr;
 	( void ) PT_YIELD_FLAG;
 	PSOCK_GENERATOR_SEND( &s->sout, generate_http_settings, NULL );
+	PSOCK_END( &s->sout );
+}
+
+/*---------------------------------------------------------------------------*/
+
+static PT_THREAD( show_recipes ( struct httpd_state *s, char *ptr ) )
+{
+	PSOCK_BEGIN( &s->sout );
+	( void ) ptr;
+	( void ) PT_YIELD_FLAG;
+	PSOCK_GENERATOR_SEND( &s->sout, httpd_generate_recipe_list, NULL );
 	PSOCK_END( &s->sout );
 }

@@ -140,7 +140,7 @@ static void ls(char * str)
 
 
 #if _USE_LFN
-    static char lfn[_MAX_LFN * (_DF1S ? 2 : 1) + 1];
+    static char lfn[_MAX_LFN * + 1];
     fno.lfname = lfn;
     fno.lfsize = sizeof(lfn);
 #endif

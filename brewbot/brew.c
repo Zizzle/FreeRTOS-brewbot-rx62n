@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -26,6 +27,8 @@
 #include "brew_task.h"
 #include "hop_droppers.h"
 #include "crane.h"
+#include "fatfs/ff.h"
+#include "brewbot.h"
 
 #define TICKS_PER_MINUTE (60 * configTICK_RATE_HZ)
 
@@ -45,9 +48,24 @@ static struct state
     char         in_alarm;
     uint8_t      step;
     uint8_t      graphx;
-    portTickType stepStartTick;
+    portTickType brew_start_tick;
+    portTickType step_start_tick;
+    long         total_runtime;  // seconds since the start of the brew
+    long         step_runtime;   // seconds since the start of the current step
     uint8_t      hop_addition_done[MAX_HOP_ADDITIONS];
 } g_state = { 0, 0, 0, 0};
+
+static void brew_log(char *fmt, ...)
+{
+    char message[40];
+    UINT written;
+    va_list ap;
+    va_start(ap, fmt);
+    int len = vsnprintf(message, sizeof(message) - 1, fmt, ap);
+    va_end(ap);
+
+//    f_write(&g_state.file, message, len, &written);
+}
 
 static const char *brew_step_name(unsigned char step)
 {
@@ -58,8 +76,12 @@ static const char *brew_step_name(unsigned char step)
 
 static void brew_run_step()
 {
-    g_state.stepStartTick = xTaskGetTickCount();
+    g_state.step_start_tick = xTaskGetTickCount();
     g_steps[g_state.step].method(1);
+
+    lcd_clear();
+
+    lcd_printf(0, 0, 14, "%d.%s", g_state.step, g_steps[g_state.step].name);
 }
 
 static void brew_next_step()
@@ -68,6 +90,8 @@ static void brew_next_step()
     {
 	return;
     }
+
+    STIRRER_DDR = 0;
 
     g_state.step++;
     brew_run_step();
@@ -90,6 +114,16 @@ void brew_error_handler(brew_task_t *bt)
 // STEP 1
 void brew_reset_crane(int init)
 {
+    if (init)
+    {
+	if (!crane_is_at_top())
+	    crane_move(DIRECTION_UP, brew_error_handler);
+    }
+    
+    if (!crane_is_moving() && !crane_is_at_left() && crane_is_at_top())
+	crane_move(DIRECTION_LEFT, brew_error_handler);
+
+    brew_next_step_if (crane_is_at_left() && crane_is_at_top());
 }
 
 // STEP 2
@@ -97,8 +131,9 @@ void brew_fill_and_heat(int init)
 {
     if (init)
     {
-	setHeatTargetTemperature(g_settings.mash_target_temp);
-	setHeatDutyCycle(g_settings.mash_duty_cycle);
+	heat_start(brew_error_handler);
+	heat_set_target_temperature(g_settings.mash_target_temp);
+	heat_set_dutycycle(70);
 	fill_start(brew_error_handler);
     }
     else brew_next_step_if(!fill_is_running() && heat_has_reached_target());
@@ -107,29 +142,83 @@ void brew_fill_and_heat(int init)
 // STEP 3
 void brew_crane_to_mash(int init)
 {
-    if (init)   crane_move(DIRECTION_RIGHT, brew_error_handler);
+    if (init)
+    {
+	crane_move(DIRECTION_RIGHT, brew_error_handler);
+
+	heat_start(brew_error_handler);
+	heat_set_target_temperature(g_settings.mash_target_temp);
+	heat_set_dutycycle(g_settings.mash_duty_cycle);
+    }
     else brew_next_step_if(!crane_is_moving());
 }
 
 // STEP 4
 void brew_mash_in(int init)
 {
-    if (init)	crane_move(DIRECTION_DOWN, brew_error_handler);
+    if (init)
+    {
+	crane_move(DIRECTION_DOWN, brew_error_handler);
+
+	heat_start(brew_error_handler);
+	heat_set_target_temperature(g_settings.mash_target_temp);
+	heat_set_dutycycle(g_settings.mash_duty_cycle);
+    }
     else brew_next_step_if(!crane_is_moving());
 }
 
 // STEP 5
 void brew_mash(int init)
 {
-    brew_next_step_if (xTaskGetTickCount() - g_state.stepStartTick > g_settings.mash_time * TICKS_PER_MINUTE);
+    long remain = g_settings.mash_time * 60 - g_state.step_runtime;
+    if (init)
+    {
+	STIRRER_DDR = 1;
+	outputOn(STIRRER);
+
+	heat_start(brew_error_handler);
+	heat_set_target_temperature(g_settings.mash_target_temp);
+	heat_set_dutycycle(g_settings.mash_duty_cycle);
+    }
+
+    lcd_printf(0, 1, 19, "%.2d:%.2d Elapsed", g_state.step_runtime / 60,
+	       g_state.step_runtime % 60);
+    lcd_printf(0, 2, 19, "%.2d:%.2d Remaining", remain / 60, remain % 60);
+
+    brew_next_step_if (g_state.step_runtime > g_settings.mash_time * 60);
 }
 
 // STEP 6
 void brew_mash_out(int init)
 {
-    if (init)	crane_move(DIRECTION_UP, brew_error_handler);
+    long remain = g_settings.mash_out_time * 60 - g_state.step_runtime;
+
+    if (init)
+    {
+	heat_start(brew_error_handler);
+	heat_set_target_temperature(90.0f);
+	heat_set_dutycycle(g_settings.boil_duty_cycle);
+    }
     else brew_next_step_if (!crane_is_moving() &&
-			    xTaskGetTickCount() - g_state.stepStartTick > 5 * TICKS_PER_MINUTE);
+			    g_state.step_runtime > g_settings.mash_out_time * 60);
+
+
+    if (g_state.step_runtime < 50)
+    {
+	if ((g_state.step_runtime % 5) == 0)
+	    crane_move(DIRECTION_UP, brew_error_handler);
+	else
+	    crane_stop();
+    }
+    else if (!crane_is_at_top() && !crane_is_moving())
+    {
+	crane_move(DIRECTION_UP, brew_error_handler);
+    }
+
+    lcd_printf(0, 1, 19, "%.2d:%.2d Elapsed", g_state.step_runtime / 60,
+	       g_state.step_runtime % 60);
+    lcd_printf(0, 2, 19, "%.2d:%.2d Remaining", remain / 60, remain % 60);
+
 }
 
 // STEP 7
@@ -137,10 +226,12 @@ void brew_to_boil(int init)
 {
     if (init)
     {
-	setHeatTargetTemperature(90.0f);
-	setHeatDutyCycle(g_settings.boil_duty_cycle);
+	heat_start(brew_error_handler);
+	heat_set_target_temperature(90.0f);
+	heat_set_dutycycle(g_settings.boil_duty_cycle);
     }
     else brew_next_step_if (heat_has_reached_target());
+    brew_next_step();
 }
 
 // STEP 8
@@ -148,9 +239,10 @@ void brew_boil_stabilise(int init)
 {
     if (init)
     {
-	setHeatTargetTemperature(101.0f);
-	setHeatDutyCycle(g_settings.boil_duty_cycle);
 	crane_move(DIRECTION_LEFT, brew_error_handler);
+	heat_start(brew_error_handler);
+	heat_set_target_temperature(101.0f);
+	heat_set_dutycycle(g_settings.boil_duty_cycle);
     }
     else brew_next_step_if (!crane_is_moving());
 }
@@ -159,25 +251,29 @@ void brew_boil_stabilise(int init)
 void brew_boil_hops(int init)
 {
     int ii;
-    int minute_from_start = (xTaskGetTickCount() - g_state.stepStartTick) / TICKS_PER_MINUTE;
-    int minute_from_end   = g_settings.boil_time - minute_from_start;
+    long remain = g_settings.boil_time * 60 - g_state.step_runtime;
 
-    for (ii = 0; ii < MAX_HOP_ADDITIONS; ii++)
+    for (ii = 0; ii < HOP_DROPPER_NUM; ii++)
     {
+	long drop_second = g_settings.hop_addition[ii] * 60; 
+
+	if (g_state.hop_addition_done[ii] == 0)
+	    lcd_printf(0, 1 + ii, 19, "Hops %d in %.2d:%.2d", ii + 1,
+		       (remain - drop_second) / 60,
+		       (remain - drop_second) % 60);
+
 	if (init)
 	{
 	    g_state.hop_addition_done[ii] = 0;
 	}
-	else if (minute_from_end <= g_settings.hop_addition[ii] &&
-		 !g_state.hop_addition_done[ii])
+	else if (remain < drop_second && !g_state.hop_addition_done[ii])
 	{
 	    g_state.hop_addition_done[ii] = 1;
-
-	    hop_drop(ii);
+	    hops_drop(ii, brew_error_handler);
 	}
     }
 
-    brew_next_step_if (xTaskGetTickCount() - g_state.stepStartTick > g_settings.boil_time * TICKS_PER_MINUTE);
+    brew_next_step_if (g_state.step_runtime / 60 > g_settings.boil_time);
 }
 
 // STEP 10
@@ -185,7 +281,7 @@ void brew_finish(int init)
 {
     if (init)
     {
-	stopHeatTask();
+	heat_stop();
     }
     else
     {
@@ -196,13 +292,13 @@ void brew_finish(int init)
 static struct brew_step g_steps[BREW_STEPS_TOTAL] = 
 {
     {"Reset crane",        brew_reset_crane,     0},
-    {"Fill & Heat water",  brew_fill_and_heat,   0},
+    {"Fill & Heat",        brew_fill_and_heat,   0},
     {"Crane to mash",      brew_crane_to_mash,   0},
     {"Mash In",            brew_mash_in,         0},
     {"Mash",               brew_mash,            0},
-    {"Crane out mash",     brew_mash_out,        0},
+    {"Crane out",          brew_mash_out,        0},
     {"Bring to boil",      brew_to_boil,         0},
-    {"Boil stabilize",     brew_boil_stabilise,  0},
+    {"Boil stable",        brew_boil_stabilise,  0},
     {"Boil & Hops",        brew_boil_hops,       0},
     {"Finish",             brew_finish,          0},
 };
@@ -214,25 +310,39 @@ void brew_start_cb(brew_task_t *bt)
 
 void brew_iterate_cb(brew_task_t *bt)
 {
+    // caclulate the runtimes
+    g_state.total_runtime = (xTaskGetTickCount() - g_state.brew_start_tick) / configTICK_RATE_HZ;
+    g_state.step_runtime  = (xTaskGetTickCount() - g_state.step_start_tick) / configTICK_RATE_HZ;
+
+    // run the current step
     g_steps[g_state.step].method(0);
-    vTaskDelay(50);
+    vTaskDelay(100);
+
+    // display the total run time
+    lcd_printf(14, 0, 5, "%.2d:%.2d", g_state.total_runtime / 60, g_state.total_runtime % 60);
 }
 
 void brew_stop_cb(brew_task_t *bt)
 {
     // all off
     fill_stop();
-    stopHeatTask();
+    heat_stop();
     crane_stop();
+    STIRRER_DDR = 0;
 }
 
 void brew_start(int init)
 {
     if (init)
     {
+	g_state.brew_start_tick = xTaskGetTickCount();
 	g_state.step = 0;
 	brewTaskStart(&brew_task, NULL);
     }
+    else
+    {
+	brewTaskStop(&brew_task);	
+    }  
 }
 
 void brew_start_task()
@@ -251,10 +361,17 @@ int brew_key_handler(unsigned char key)
 
 void brew_resume(int init)
 {
-    g_state.in_alarm = 0;
-    lcd_printf(0, 2, 19, "Resume at step:");
-    lcd_printf(0, 6, 19, "(> to resume)");
-    brew_resume_key(KEY_PRESSED);
+    if (init)
+    {
+	g_state.in_alarm = 0;
+	lcd_printf(0, 2, 19, "Resume at step:");
+	lcd_printf(0, 6, 19, "(> to resume)");
+	brew_resume_key(KEY_PRESSED);
+    }
+    else
+    {
+	brewTaskStop(&brew_task);
+    }
 }
 
 int brew_resume_key(unsigned char key)

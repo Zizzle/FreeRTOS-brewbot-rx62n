@@ -10,7 +10,11 @@
 #ifndef HOP_DROPPERS_H
 #define HOP_DROPPERS_H
 
-void hop_drop(short servo);
+#define HOP_DROPPER_NUM 3
+
 void servo_set_pos(short servo, short degrees);
+void hops_start_task();
+void hops_drop(short dropper, void (*taskErrorHandler)(brew_task_t *));
+
 
 #endif

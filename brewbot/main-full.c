@@ -12,6 +12,8 @@
 #include "fill.h"
 #include "level_probes.h"
 #include "fatfs/ff.h"
+#include "hop_droppers.h"
+#include "heat.h"
 
 /* Priorities at which the tasks are created. */
 #define mainCHECK_TASK_PRIORITY		( configMAX_PRIORITIES - 1 )
@@ -27,7 +29,7 @@
 
 /* The WEB server uses string handling functions, which in turn use a bit more
 stack than most of the other tasks. */
-#define mainuIP_STACK_SIZE			( configMINIMAL_STACK_SIZE * 3 )
+#define mainuIP_STACK_SIZE			( configMINIMAL_STACK_SIZE * 5 )
 
 /* The LED toggled by the check task. */
 #define mainCHECK_LED				( 5 )
@@ -104,7 +106,6 @@ int main(void)
     mount_result  = f_mount (0, &Fatfs);
 
     level_probe_init(); // Kick off the ADC continuosly running
-    lcd_set_address(0, 0);
     settings_load();
 
     /* The web server task. */
@@ -114,6 +115,8 @@ int main(void)
     startButtonsTask(); // this will drive the menu system
     start_crane_task();
     start_fill_task();
+    heat_start_task();
+    hops_start_task();
     brew_start_task();
     vSetupHighFrequencyTimer();
 
@@ -165,7 +168,7 @@ void vApplicationSetupTimerInterrupt( void )
 of this file. */
 void vApplicationMallocFailedHook( void )
 {
-    lcd_string(0,0, "Malloc failed");
+    lcd_text(0,0, "Malloc failed");
     for( ;; );
 }
 /*-----------------------------------------------------------*/
@@ -174,7 +177,7 @@ void vApplicationMallocFailedHook( void )
 of this file. */
 void vApplicationStackOverflowHook( xTaskHandle *pxTask, signed char *pcTaskName )
 {
-    lcd_string(0,0, "Stack Overflow");
+    lcd_text(0,0, "Stack Overflow");
     for( ;; );
 }
 /*-----------------------------------------------------------*/

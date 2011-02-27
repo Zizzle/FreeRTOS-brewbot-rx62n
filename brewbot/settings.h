@@ -25,6 +25,7 @@ struct settings
     uint8_t  mash_duty_cycle;
     uint8_t  boil_duty_cycle;
     uint8_t  hop_addition[MAX_HOP_ADDITIONS];
+    uint8_t  mash_out_time;
 };
 
 void settings_load();

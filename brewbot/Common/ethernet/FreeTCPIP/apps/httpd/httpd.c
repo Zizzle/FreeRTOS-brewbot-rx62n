@@ -72,10 +72,23 @@
 #define ISO_slash		0x2f
 #define ISO_colon		0x3a
 
+static char *strnchr(char *haystack, int needle, int len)
+{
+    int ii = 0;
+
+    for (ii = 0; ii < len; ii++)
+    {
+	if (needle == haystack[ii])
+	    return haystack + ii;
+    }
+    return NULL;
+}
+
 /*---------------------------------------------------------------------------*/
 static unsigned short generate_part_of_file( void *state )
 {
 	struct httpd_state	*s = ( struct httpd_state * ) state;
+	UINT bytes_read;
 
 	if( s->file.len > uip_mss() )
 	{
@@ -86,8 +99,15 @@ static unsigned short generate_part_of_file( void *state )
 		s->len = s->file.len;
 	}
 
-	memcpy( uip_appdata, s->file.data, s->len );
+	// httpd may not have sent all the data last time. Seek to the right spot.
+	if (s->file.fat_file.fptr != s->file.fat_file.fsize - s->file.len)
+	{
+	    f_lseek(&s->file.fat_file, s->file.fat_file.fsize - s->file.len);
+	}
 
+	// read the file data into the output buffer
+	f_read ( &s->file.fat_file, uip_appdata, s->len, &bytes_read);
+	s->len = bytes_read;
 	return s->len;
 }
 
@@ -102,7 +122,6 @@ static PT_THREAD( send_file ( struct httpd_state *s ) )
 	{
 		PSOCK_GENERATOR_SEND( &s->sout, generate_part_of_file, s );
 		s->file.len -= s->len;
-		s->file.data += s->len;
 	} while( s->file.len > 0 );
 
 	PSOCK_END( &s->sout );
@@ -114,7 +133,7 @@ static PT_THREAD( send_part_of_file ( struct httpd_state *s ) )
 	PSOCK_BEGIN( &s->sout );
 	( void ) PT_YIELD_FLAG;
 	
-	PSOCK_SEND( &s->sout, s->file.data, s->len );
+	PSOCK_SEND( &s->sout, uip_appdata, s->len );
 
 	PSOCK_END( &s->sout );
 }
@@ -137,10 +156,16 @@ static PT_THREAD( handle_script ( struct httpd_state *s ) )
 	( void ) PT_YIELD_FLAG;
 	while( s->file.len > 0 )
 	{
+	    char *fdata = uip_appdata;
+
+	    // read part of the file in
+	    generate_part_of_file(s);
+
+
 		/* Check if we should start executing a script. */
-		if( *s->file.data == ISO_percent && *(s->file.data + 1) == ISO_bang )
+		if( *fdata == ISO_percent && *(fdata + 1) == ISO_bang )
 		{
-			s->scriptptr = s->file.data + 3;
+			s->scriptptr = fdata + 3;
 			s->scriptlen = s->file.len - 3;
 			if( *(s->scriptptr - 1) == ISO_colon )
 			{
@@ -154,44 +179,27 @@ static PT_THREAD( handle_script ( struct httpd_state *s ) )
 
 			next_scriptstate( s );
 
-			/* The script is over, so we reset the pointers and continue
-	 		sending the rest of the file. */
-			s->file.data = s->scriptptr;
+			/* The script is over, so we reset the pointers and continue sending the rest of the file. */
 			s->file.len = s->scriptlen;
 		}
 		else
 		{
-			/* See if we find the start of script marker in the block of HTML
-	 to be sent. */
-			if( s->file.len > uip_mss() )
+		    /* See if we find the start of script marker in the block of HTML to be sent. */
+			if( *fdata == ISO_percent )
 			{
-				s->len = uip_mss();
+			    ptr = strnchr( fdata + 1, ISO_percent, s->len - 1 );
 			}
 			else
 			{
-				s->len = s->file.len;
+			    ptr = strnchr( fdata, ISO_percent, s->len );
 			}
 
-			if( *s->file.data == ISO_percent )
+			if( ptr != NULL && ptr != fdata )
 			{
-				ptr = strchr( s->file.data + 1, ISO_percent );
-			}
-			else
-			{
-				ptr = strchr( s->file.data, ISO_percent );
-			}
-
-			if( ptr != NULL && ptr != s->file.data )
-			{
-				s->len = ( int ) ( ptr - s->file.data );
-				if( s->len >= uip_mss() )
-				{
-					s->len = uip_mss();
-				}
+				s->len = ( int ) ( ptr - fdata );
 			}
 
 			PT_WAIT_THREAD( &s->scriptpt, send_part_of_file(s) );
-			s->file.data += s->len;
 			s->file.len -= s->len;
 		}
 	}
@@ -213,7 +221,7 @@ static PT_THREAD( send_headers ( struct httpd_state *s, const char *statushdr ) 
 	{
 		PSOCK_SEND_STR( &s->sout, http_content_type_binary );
 	}
-	else if( strncmp(http_html, ptr, 5) == 0 || strncmp(http_shtml, ptr, 6) == 0 )
+	else if( strncmp(http_html, ptr, 4) == 0 || strncmp(http_shtml, ptr, 4) == 0 )
 	{
 		PSOCK_SEND_STR( &s->sout, http_content_type_html );
 	}
@@ -248,6 +256,12 @@ static PT_THREAD( handle_output ( struct httpd_state *s ) )
 
 	PT_BEGIN( &s->outputpt );
 	( void ) PT_YIELD_FLAG;
+
+	// truncate .html to .htm
+	char	*ptr = strrchr( s->filename, ISO_period );
+	if (ptr != NULL) ptr[4] = 0;
+
+
 	if( !httpd_fs_open(s->filename, &s->file) )
 	{
 		httpd_fs_open( http_404_html, &s->file );

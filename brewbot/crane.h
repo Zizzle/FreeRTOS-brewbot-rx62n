@@ -27,4 +27,9 @@ uint8_t crane_is_moving();
 void crane_move(int direction, void (*taskErrorHandler)(brew_task_t *));
 void crane_stop();
 
+uint8_t crane_is_at_left();
+uint8_t crane_is_at_right();
+uint8_t crane_is_at_top();
+uint8_t crane_is_at_bottom();
+
 #endif

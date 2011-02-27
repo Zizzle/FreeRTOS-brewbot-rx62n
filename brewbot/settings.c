@@ -37,6 +37,7 @@ static struct settings_display settings_display_list[] =
     {" Mash target %.1f C", FLOAT, &g_settings.mash_target_temp},
     {" Mash time   %d min", UINT8, &g_settings.mash_time},
     {" Mash duty   %d %%",  UINT8, &g_settings.mash_duty_cycle},
+    {" Mash out time %d" ,  UINT8, &g_settings.mash_out_time},
     {" Boil time   %d min", UINT8, &g_settings.boil_time},
     {" Boil duty   %d %%",  UINT8, &g_settings.boil_duty_cycle},
     {" Hop time 1  %d min", UINT8, &g_settings.hop_addition[0]},
@@ -45,7 +46,7 @@ static struct settings_display settings_display_list[] =
     {NULL, 0, NULL}
 };
 
-#define SETTINGS_MENU_LEN 8
+#define SETTINGS_MENU_LEN 9
 
 int settings_offset = 0;
 int settings_cursor = 0;
@@ -59,6 +60,7 @@ void settings_load()
 	g_settings.magic             = SETTINGS_MAGIC;
 	g_settings.mash_time         = 60;
 	g_settings.mash_target_temp  = 66.00f;
+	g_settings.mash_out_time     = 5;
 	g_settings.boil_time         = 60;
 	g_settings.mash_duty_cycle   = 10;
 	g_settings.boil_duty_cycle   = 50;

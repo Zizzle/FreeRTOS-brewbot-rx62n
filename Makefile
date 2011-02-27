@@ -57,6 +57,7 @@ CFILES_ENET = \
 	brewbot/level_probes.c \
 	brewbot/brew_task.c \
 	brewbot/settings.c \
+	brewbot/recipes.c \
 	brewbot/main-full.c
 
 CFILES = \

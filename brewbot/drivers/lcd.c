@@ -1,10 +1,14 @@
 #include "iodefine.h"
 #include "lcd.h"
 #include "spi.h"
+#include "FreeRTOS.h"
+#include "semphr.h"
 
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+xSemaphoreHandle xLcdMutex;
 
 // lcd is 96 x 64 pixels
 // 19 x 8 chars
@@ -16,6 +20,46 @@
 // the A0 line is used to determine which mode the byte sent is to be interpreted in
 #define LCD_SET_COMMAND_MODE     PORT5.DR.BIT.B1 = 0
 #define LCD_SET_DATA_MODE        PORT5.DR.BIT.B1 = 1
+
+#define LCD_DEFAULT_LOCK_WAIT 10000 // how long to wait for the mutex
+
+static void lcd_out_byte(uint8_t byte, uint8_t isCommand)
+{
+    if (!spi_select(SPI_DEVICE_LCD))
+	return;
+    if (isCommand) LCD_SET_COMMAND_MODE;
+    else LCD_SET_DATA_MODE;
+    spi_write(&byte, 1);
+    spi_release();
+}
+
+static void lcd_command(int8_t command)
+{
+    lcd_out_byte(command, 1);
+}
+
+static void lcd_write(int8_t data)
+{
+    lcd_out_byte(data, 0);
+}
+
+static void lcd_set_x(uint8_t xx)
+{
+    lcd_command(LCD_COMMAND_PAGE_ZERO);
+    lcd_command(0x80 | xx);
+}
+
+static void lcd_set_y_page(uint8_t yy)
+{
+    lcd_command(LCD_COMMAND_PAGE_ZERO);
+    lcd_command(0x40 | yy);	
+}
+
+static void lcd_set_address(uint8_t yy, uint8_t xx)
+{
+    lcd_set_y_page(yy);
+    lcd_set_x(xx);
+}
 
 void lcd_open()
 {
@@ -50,47 +94,11 @@ void lcd_open()
     lcd_command(LCD_COMMAND_PAGE_ZERO);
     lcd_command(0x8 | 0x4);
 
+    xLcdMutex = xSemaphoreCreateMutex();
 }
 
-void lcd_set_x(uint8_t xx)
-{
-    lcd_command(LCD_COMMAND_PAGE_ZERO);
-    lcd_command(0x80 | xx);
-}
 
-void lcd_set_y_page(uint8_t yy)
-{
-    lcd_command(LCD_COMMAND_PAGE_ZERO);
-    lcd_command(0x40 | yy);	
-}
-
-void lcd_set_address(uint8_t yy, uint8_t xx)
-{
-    lcd_set_y_page(yy);
-    lcd_set_x(xx);
-}
-
-void lcd_out_byte(uint8_t byte, uint8_t isCommand)
-{
-    if (!spi_select(SPI_DEVICE_LCD))
-	return;
-    if (isCommand) LCD_SET_COMMAND_MODE;
-    else LCD_SET_DATA_MODE;
-    spi_write(&byte, 1);
-    spi_release();
-}
-
-void lcd_command(int8_t command)
-{
-    lcd_out_byte(command, 1);
-}
-
-void lcd_write(int8_t data)
-{
-    lcd_out_byte(data, 0);
-}
-
-void lcd_display_char(char c)
+static void lcd_display_char(char c)
 {
     int ii;
     const uint8_t *data = Fontx5x7_table[(int)c];
@@ -100,69 +108,67 @@ void lcd_display_char(char c)
     }
 }
 
-void lcd_string(uint8_t yy, uint8_t xx, const char *str)
+static void lcd_string(uint8_t yy, uint8_t xx, const char *str)
 {
-  lcd_set_address(yy, xx);
-  while (*str)
-  {
+
+    lcd_set_address(yy, xx);
+    while (*str)
+    {
 	lcd_display_char(*str++);
-  }
-}
-
-void lcd_display_number(int number)
-{
-    lcd_display_number_w_decimal(number, -1);
-}
-
-void lcd_display_number_w_decimal(int number, int decimal_place)
-{
-    char result[12];
-    int i = 0;
-    do
-    {
-	result[i++] = '0' + (number % 10);
-    }
-    while ((number /= 10) > 0 && i < sizeof(result) );
-    i--;
-
-    while (i >= 0)
-    {
-        lcd_display_char(result[i]);
-	if (decimal_place > 0 && i == decimal_place) lcd_display_char('.');
-	i--;
     }
 }
+
+#define LCD_LOCK()  if( xSemaphoreTake( xLcdMutex, LCD_DEFAULT_LOCK_WAIT ) != pdTRUE ) return
+#define LCD_UNLOCK() xSemaphoreGive(xLcdMutex)
+
+void lcd_text(uint8_t col, uint8_t row, const char *text)
+{
+    LCD_LOCK();
+    lcd_string(row, CHAR_W * col, text);
+    LCD_UNLOCK();
+}
+
 
 void lcd_clear(void)
 {
     int i = 0 ;
+
+    LCD_LOCK();
 
     // clear the ram
     lcd_set_x(0);
     lcd_set_y_page(0);
     for (i =0 ; i < 808; i++)
 	lcd_write(0x00);
-}
 
-void lcd_text(uint8_t col, uint8_t row, const char *text)
-{
-    lcd_string(row, CHAR_W * col, text);
+    LCD_UNLOCK();
 }
 
 void lcd_clear_chars(uint8_t col, uint8_t row, uint8_t ww)
 {
     int i = 0 ;
+
+    LCD_LOCK();
+
     lcd_set_address(col * CHAR_W, row);
     for (i =0 ; i < ww * CHAR_W; i++)
 	lcd_write(0x00);
+
+    LCD_UNLOCK();
 }
 
 void lcd_set_pixels(uint8_t col, uint8_t row, uint8_t ww)
 {
     int i = 0 ;
+
+    LCD_LOCK();
+
     lcd_set_address(col * CHAR_W, row);
     for (i =0 ; i < ww * CHAR_W; i++)
 	lcd_write(0xff);
+
+    LCD_UNLOCK();
+
 }
 
 void lcd_printf(uint8_t col, uint8_t row, uint8_t ww, const char *fmt, ...)
@@ -172,10 +178,14 @@ void lcd_printf(uint8_t col, uint8_t row, uint8_t ww, const char *fmt, ...)
     va_start(ap, fmt);
     int len = vsnprintf(message, sizeof(message) - 1, fmt, ap);
     va_end(ap);
-    lcd_text(col, row, message);
 
+    LCD_LOCK();
+
+    lcd_string(row, col * CHAR_W, message);
     while (len++ < ww)
     {
 	lcd_display_char(' ');
     }
+
+    LCD_UNLOCK();
 }
