@@ -13,6 +13,7 @@
 #include "iodefine.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "semphr.h"
 
 #include "shell.h"
 
@@ -26,9 +27,19 @@
 #define P5Q_WEL 0x2
 #define PAGE_SIZE 64
 
+xSemaphoreHandle xP5QMutex;
+#define P5Q_DEFAULT_LOCK_WAIT 10000 // how long to wait for the mutex
+#define P5Q_LOCK()  if( xSemaphoreTake( xP5QMutex, P5Q_DEFAULT_LOCK_WAIT ) != pdTRUE ) return
+#define P5Q_UNLOCK() xSemaphoreGive(xP5QMutex)
+
 #define spi_select_p5q() if (!spi_select(SPI_DEVICE_P5Q)) return;
 
-uint8_t flash_read_status_register()
+void flash_init()
+{
+    xP5QMutex = xSemaphoreCreateMutex();
+}
+
+static uint8_t flash_read_status_register()
 {
     uint8_t status, out = SPI_FLASH_READ_STATUS;
 
@@ -45,39 +56,12 @@ uint8_t flash_read_status_register()
     return status;
 }
 
-uint8_t flash_is_busy()
+static uint8_t flash_is_busy()
 {
     return flash_read_status_register() & P5Q_WIP;
 }
 
-
-void flash_read_id(uint8_t idbuf[3])
-{
-    uint8_t out = SPI_FLASH_READ_ID;
-    spi_select_p5q();
-    spi_write(&out, 1);
-    spi_read(idbuf, 3);
-    spi_release();
-}
-
-
-void flash_read(uint32_t addr, uint8_t *buffer, uint32_t byteCount)
-{
-    uint8_t command[4] =
-	{
-	    SPI_FLASH_READ_BYTES,
-	    addr >> 16,
-	    addr  >> 8,
-	    addr
-	};
-
-    spi_select_p5q();
-    spi_write(command, sizeof(command));
-    spi_read(buffer, byteCount);
-    spi_release();
-}
-
-void flash_write_enable()
+static void flash_write_enable()
 {
     int ii;
     uint8_t command = SPI_FLASH_WRITE_ENABLE;
@@ -94,7 +78,7 @@ void flash_write_enable()
     }
 }
 
-void flash_wait_for_write_complete()
+static void flash_wait_for_write_complete()
 {
     int ii;
     for (ii = 0;flash_is_busy(); ii++)
@@ -105,12 +89,45 @@ void flash_wait_for_write_complete()
     //shell_printf("waited %d", ii);
 }
 
+
+void flash_read_id(uint8_t idbuf[3])
+{
+    uint8_t out = SPI_FLASH_READ_ID;
+
+    P5Q_LOCK();
+    spi_select_p5q();
+    spi_write(&out, 1);
+    spi_read(idbuf, 3);
+    spi_release();
+    P5Q_UNLOCK();
+}
+
+
+void flash_read(uint32_t addr, uint8_t *buffer, uint32_t byteCount)
+{
+    uint8_t command[4] =
+	{
+	    SPI_FLASH_READ_BYTES,
+	    addr >> 16,
+	    addr  >> 8,
+	    addr
+	};
+
+    P5Q_LOCK();
+    spi_select_p5q();
+    spi_write(command, sizeof(command));
+    spi_read(buffer, byteCount);
+    spi_release();
+    P5Q_UNLOCK();
+}
+
 void flash_write(uint32_t addr, const uint8_t *buffer, uint32_t byteCount)
 {
     uint8_t command[4];
 
     //shell_printf("writing to %x, %d bytes", addr, byteCount);
 
+    P5Q_LOCK();
     while (byteCount)
     {
 	uint8_t amt = (byteCount < PAGE_SIZE ? byteCount : PAGE_SIZE);
@@ -136,4 +153,5 @@ void flash_write(uint32_t addr, const uint8_t *buffer, uint32_t byteCount)
 
 	flash_wait_for_write_complete();
     }
+    P5Q_UNLOCK();
 }

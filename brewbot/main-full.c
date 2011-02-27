@@ -102,6 +102,7 @@ int main(void)
 
     spi_open();
     lcd_open();
+    flash_init();
 
     mount_result  = f_mount (0, &Fatfs);
 

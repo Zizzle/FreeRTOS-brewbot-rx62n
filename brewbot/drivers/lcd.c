@@ -22,6 +22,8 @@ xSemaphoreHandle xLcdMutex;
 #define LCD_SET_DATA_MODE        PORT5.DR.BIT.B1 = 1
 
 #define LCD_DEFAULT_LOCK_WAIT 10000 // how long to wait for the mutex
+#define LCD_LOCK()  if( xSemaphoreTake( xLcdMutex, LCD_DEFAULT_LOCK_WAIT ) != pdTRUE ) return
+#define LCD_UNLOCK() xSemaphoreGive(xLcdMutex)
 
 static void lcd_out_byte(uint8_t byte, uint8_t isCommand)
 {
@@ -117,9 +119,6 @@ static void lcd_string(uint8_t yy, uint8_t xx, const char *str)
 	lcd_display_char(*str++);
     }
 }
-
-#define LCD_LOCK()  if( xSemaphoreTake( xLcdMutex, LCD_DEFAULT_LOCK_WAIT ) != pdTRUE ) return
-#define LCD_UNLOCK() xSemaphoreGive(xLcdMutex)
 
 void lcd_text(uint8_t col, uint8_t row, const char *text)
 {
