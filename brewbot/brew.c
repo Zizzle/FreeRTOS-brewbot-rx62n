@@ -231,7 +231,6 @@ void brew_to_boil(int init)
 	heat_set_dutycycle(g_settings.boil_duty_cycle);
     }
     else brew_next_step_if (heat_has_reached_target());
-    brew_next_step();
 }
 
 // STEP 8
@@ -266,14 +265,15 @@ void brew_boil_hops(int init)
 	{
 	    g_state.hop_addition_done[ii] = 0;
 	}
-	else if (remain < drop_second && !g_state.hop_addition_done[ii])
+	else if (remain <= drop_second && !g_state.hop_addition_done[ii])
 	{
 	    g_state.hop_addition_done[ii] = 1;
 	    hops_drop(ii, brew_error_handler);
 	}
     }
+    lcd_printf(0, 5, 19, "%.2d:%.2d Remaining", remain / 60, remain % 60);
 
-    brew_next_step_if (g_state.step_runtime / 60 > g_settings.boil_time);
+    brew_next_step_if (remain <= 0);
 }
 
 // STEP 10

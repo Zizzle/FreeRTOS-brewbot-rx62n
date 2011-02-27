@@ -1,0 +1,34 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+  <head>
+    <title>Brewbot - Create a new recipe</title>
+  </head>
+  <BODY>
+<font face="arial">
+<h1>Create a new recipe</h1>
+
+<form method="GET" action="/html/recipes.sht">
+Recipe name: <input type="text" name="name"/><br/>
+Brewer's name: <input type="text" name="brewer"/><br/>
+Mash time: <input type="text" name="mash_time" value="60"/> minutes<br/>
+Mash temperature: <input type="text" name="mash_target_temp" value="66.0"/> C<br/>
+Boil time: <input type="text" name="boil_time" value="60"/> minutes<br/>
+Hop addition time 1: <input type="text" name="hop_addition_1" value="60"/> minutes<br/>
+Hop addition time 2: <input type="text" name="hop_addition_2" value="40"/> minutes<br/>
+Hop addition time 3: <input type="text" name="hop_addition_3" value="10"/> minutes<br/>
+
+Notes:
+<textarea rows="10" cols="40" wrap="physical" name="notes">
+
+</textarea>
+
+<input type="submit" value="Create"> 
+</form>
+
+<br><p>
+<hr>
+<br><p>
+
+</font>
+</body>
+</html>

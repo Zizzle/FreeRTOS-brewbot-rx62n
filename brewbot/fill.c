@@ -50,14 +50,17 @@ static void display_status(brew_task_t *bt)
 static void fill_job_start_stop(brew_task_t *bt)
 {
     allOff();
+
+    // make sure we have consistent readings on the level probes
+    level_wait_for_steady_readings();
 }
 
 static void fill(brew_task_t *bt)
 {
-    SOLENOID = level_hit_full();
+    SOLENOID = level_hit_full() == 1;
     display_status(bt);
 
-    if (level_hit_full())
+    if (level_hit_full() == 1)
 	bt->running = 0;
 
     vTaskDelay(10);

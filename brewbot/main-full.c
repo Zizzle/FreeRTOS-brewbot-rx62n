@@ -14,6 +14,7 @@
 #include "fatfs/ff.h"
 #include "hop_droppers.h"
 #include "heat.h"
+#include "p5q.h"
 
 /* Priorities at which the tasks are created. */
 #define mainCHECK_TASK_PRIORITY		( configMAX_PRIORITIES - 1 )
@@ -102,7 +103,7 @@ int main(void)
 
     spi_open();
     lcd_open();
-    flash_init();
+    flash_open();
 
     mount_result  = f_mount (0, &Fatfs);
 

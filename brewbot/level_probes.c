@@ -13,6 +13,8 @@
 
 #include "types.h"
 #include "iodefine.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 //
 // Ok so the level probes sit in water in the pot.
@@ -55,12 +57,74 @@ uint16_t level_probe_full_adc()
     return S12AD.ADDRD;
 }
 
-uint8_t level_hit_heat()
+#define NUM_READINGS 5
+struct reading
 {
-    return level_probe_heat_adc() < THRESHOLD;
+    uint8_t readings[NUM_READINGS];
+    uint8_t idx;
+    uint8_t cnt;
+};
+
+struct reading heat_reading;
+struct reading full_reading;
+
+static void keep_reading(struct reading *rd, uint8_t value)
+{
+    rd->readings[rd->idx] = value;
+
+    if (++(rd->idx) >= NUM_READINGS)
+    {
+	rd->idx  = 0;
+    }
+
+    if (rd->cnt < NUM_READINGS)
+	rd->cnt++; 
 }
 
-uint8_t level_hit_full()
+static uint8_t readings_same(struct reading *rd)
 {
-    return level_probe_full_adc() < THRESHOLD;
+    int ii;
+
+    if (rd->cnt < NUM_READINGS)
+	return 0;
+
+    uint8_t value = rd->readings[0];
+    for (ii = 1; ii < rd->cnt; ii++)
+    {
+	if (rd->readings[ii] != value)
+	    return 0;
+    }
+    return 1;
+}
+
+
+int8_t level_hit_heat()
+{
+    uint8_t value = level_probe_heat_adc() < THRESHOLD;
+
+    keep_reading(&heat_reading, value);
+    if (readings_same(&heat_reading))
+    {
+	return value;
+    }
+    return -1; // unsure of the value
+}
+
+int8_t level_hit_full()
+{
+    uint8_t value = level_probe_full_adc() < THRESHOLD;
+    keep_reading(&full_reading, value);
+    if (readings_same(&full_reading))
+    {
+	return value;
+    }
+    return -1; // unsure of the value
+}
+
+void level_wait_for_steady_readings()
+{
+    while (level_hit_heat() == -1)
+	vTaskDelay(10);
+    while (level_hit_full() == -1)
+	vTaskDelay(10);
 }

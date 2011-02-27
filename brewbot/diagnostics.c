@@ -18,6 +18,7 @@
 #include "hop_droppers.h"
 #include "p5q.h"
 #include "fill.h"
+#include "level_probes.h"
 
 static float heat_target = 66.0f;
 static int   heat_duty   = 50;
@@ -218,6 +219,16 @@ static int solenoid_pulse_key(unsigned char key)
 	else
 	    outputOff(SOLENOID);
     }
+
+    lcd_printf(0, 5, 19, "Probes: heat full");
+    lcd_printf(0, 6, 19, "Probes: %d %d",
+	       level_probe_heat_adc(),
+	       level_probe_full_adc());
+    lcd_printf(0, 7, 19, "Probes: %d %d",
+	       level_hit_heat(),
+	       level_hit_full());
+
+
     return 1;
 }
 //----------------------------------------------------------------------------

@@ -32,11 +32,10 @@ static void allOff()
 
 static void display_status()
 {
-    lcd_printf(0, 4, 19, "Target %.1f", heat_target);
-    lcd_printf(0, 5, 18, "Temp %.2f (%d%)",
+    lcd_printf(0, 6, 19, "Target %.1f hit %d", heat_target, heat_target_reached);
+    lcd_printf(0, 6, 18, "Temp %.2f (%d%)",
 	       (double)ds1820_get_temperature(), heat_duty_cycle);
-    lcd_printf(0,6, 19, "Probe: %d %d",level_hit_heat(), level_probe_heat_adc());
-    lcd_printf(0, 7, 19, "Target hit %d", heat_target_reached);
+    lcd_printf(0, 7, 19, "Probe: %d %d",level_hit_heat(), level_probe_heat_adc());
 }
 
 static void heat_keep_temperature()
@@ -85,6 +84,9 @@ static void _heat_start(struct brew_task *bt)
     vTaskEnterCritical();
     DS1820ReadTemp();
     vTaskExitCritical();    
+
+    // make sure we have consistent readings on the level probes
+    level_wait_for_steady_readings();
 }
 
 static void heat_iteration(struct brew_task *bt)
@@ -104,7 +106,7 @@ static void heat_iteration(struct brew_task *bt)
     {
 	if (ds1820_get_temperature() < heat_target &&
 	    ii <= heat_duty_cycle &&
-	    level_hit_heat()) // check the element is covered
+	    level_hit_heat() == 1) // check the element is covered
 	{
 	    outputOn(SSR);
 	}

@@ -15,7 +15,8 @@
 void level_probe_init();
 uint16_t level_probe_heat_adc();
 uint16_t level_probe_full_adc();
-uint8_t  level_hit_heat();
-uint8_t  level_hit_full();
+int8_t  level_hit_heat();
+int8_t  level_hit_full();
+void level_wait_for_steady_readings();
 
 #endif

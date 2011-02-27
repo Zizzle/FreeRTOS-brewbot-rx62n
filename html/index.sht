@@ -1,0 +1,25 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+  <head>
+    <title>Brewbot</title>
+  </head>
+  <BODY>
+<font face="arial">
+<h1>Welcome to the Brewbot</h1>
+<ul>
+<li><a href="/html/newrecip.sht">Create a new recpie to brew</a></li>
+<li><a href="/html/recipes.sht">Browse / edit recipes ready to brew</a></li>
+<li><a href="/html/browse.sht">Browse previous brews</a></li>
+<li><a href="/html/clone.sht">Clone a previous brew</a></li>
+<li><a href="/html/start.sht">Start a brew</a></li>
+<li><a href="/html/status.sht">Status of the system</a></li>
+<li><a href="/html/diags.sht">Diagnostics</a></li>
+</ul>
+
+<br><p>
+<hr>
+<br><p>
+
+</font>
+</body>
+</html>

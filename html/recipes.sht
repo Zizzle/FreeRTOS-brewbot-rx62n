@@ -1,0 +1,18 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+  <head>
+    <title>Brewbot - View recipes</title>
+  </head>
+  <BODY>
+<font face="arial">
+<h1>View or edit and recipe</h1>
+
+%! show-recipes
+
+<br><p>
+<hr>
+<br><p>
+
+</font>
+</body>
+</html>

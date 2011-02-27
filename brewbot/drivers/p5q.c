@@ -34,7 +34,7 @@ xSemaphoreHandle xP5QMutex;
 
 #define spi_select_p5q() if (!spi_select(SPI_DEVICE_P5Q)) return;
 
-void flash_init()
+void flash_open()
 {
     xP5QMutex = xSemaphoreCreateMutex();
 }
