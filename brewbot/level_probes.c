@@ -97,7 +97,6 @@ static uint8_t readings_same(struct reading *rd)
     return 1;
 }
 
-
 int8_t level_hit_heat()
 {
     uint8_t value = level_probe_heat_adc() < THRESHOLD;

@@ -36,16 +36,16 @@ static void _hops_start(struct brew_task *bt)
     pos = MAX_POS;
     servo_set_pos(MAX_POS);
 
-    if (servo == 0) HOP_DROPPER_1_DDR = 1; else HOP_DROPPER_1_DDR = 0;
-    if (servo == 1) HOP_DROPPER_2_DDR = 1; else HOP_DROPPER_2_DDR = 0;
-    if (servo == 2) HOP_DROPPER_3_DDR = 1; else HOP_DROPPER_3_DDR = 0;
+//    if (servo == 0) HOP_DROPPER_1_DDR = 1; else HOP_DROPPER_1_DDR = 0;
+//    if (servo == 1) HOP_DROPPER_2_DDR = 1; else HOP_DROPPER_2_DDR = 0;
+//    if (servo == 2) HOP_DROPPER_3_DDR = 1; else HOP_DROPPER_3_DDR = 0;
 }
 /*-----------------------------------------------------------*/
 static void _hops_stop(struct brew_task *bt)
 {
-    HOP_DROPPER_1_DDR = 0;
-    HOP_DROPPER_2_DDR = 0;
-    HOP_DROPPER_3_DDR = 0;
+//    HOP_DROPPER_1_DDR = 0;
+//    HOP_DROPPER_2_DDR = 0;
+//    HOP_DROPPER_3_DDR = 0;
 }
 
 static void hops_iteration(struct brew_task *bt)
@@ -115,16 +115,28 @@ void vTimer2_ISR_Handler( void )
     if (servoPwmCount >= 400)
 	servoPwmCount = 0;
 
+#if 0
     if (hops_task.running && servo == 0)
 	HOP_DROPPER_1_DDR = 1; else HOP_DROPPER_1_DDR = 0;
     if (hops_task.running && servo == 1)
 	HOP_DROPPER_2_DDR = 1; else HOP_DROPPER_2_DDR = 0;
     if (hops_task.running && servo == 2)
 	HOP_DROPPER_3_DDR = 1; else HOP_DROPPER_3_DDR = 0;
+#endif
 
-    HOP_DROPPER_1 = (servoPwm > servoPwmCount);
-    HOP_DROPPER_2 = (servoPwm > servoPwmCount);
-    HOP_DROPPER_3 = (servoPwm > servoPwmCount);
+    if (hops_task.running && servo == 0)
+	HOP_DROPPER_1 = ~(servoPwm > servoPwmCount);
+    else HOP_DROPPER_1 = 1;
+    if (hops_task.running && servo == 1)
+	HOP_DROPPER_2 = ~(servoPwm > servoPwmCount);
+    else HOP_DROPPER_2 = 1;
+    if (hops_task.running && servo == 2)
+	HOP_DROPPER_3 = ~(servoPwm > servoPwmCount);
+    else HOP_DROPPER_3 = 1;
+
+    HOP_DROPPER_1_DDR = 1;
+    HOP_DROPPER_2_DDR = 1;
+    HOP_DROPPER_3_DDR = 1;
 }
 
 /*-----------------------------------------------------------*/

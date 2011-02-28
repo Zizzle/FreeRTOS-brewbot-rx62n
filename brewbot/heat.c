@@ -32,7 +32,7 @@ static void allOff()
 
 static void display_status()
 {
-    lcd_printf(0, 6, 19, "Target %.1f hit %d", heat_target, heat_target_reached);
+    lcd_printf(0, 5, 19, "Target %.1f hit %d", heat_target, heat_target_reached);
     lcd_printf(0, 6, 18, "Temp %.2f (%d%)",
 	       (double)ds1820_get_temperature(), heat_duty_cycle);
     lcd_printf(0, 7, 19, "Probe: %d %d",level_hit_heat(), level_probe_heat_adc());

@@ -35,12 +35,10 @@ static void allOff()
 
 static void display_status(brew_task_t *bt)
 {
-    lcd_text(8, 0, "Filling");
-
     lcd_printf(0, 1, 19, "Probes: %d %d",
 	       level_probe_heat_adc(),
 	       level_probe_full_adc());
-    lcd_printf(0, 2, 19, "Probes: %d %d",
+    lcd_printf(0, 2, 19, "Probes: H %d F %d",
 	       level_hit_heat(),
 	       level_hit_full());
     lcd_printf(0, 3, 19, "Fill time: %d s",
