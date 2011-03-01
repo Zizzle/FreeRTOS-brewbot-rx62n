@@ -16,6 +16,7 @@
 #include "p5q.h"
 #include "lcd.h"
 #include "net/uip.h"
+#include "shell.h"
 
 #define SETTINGS_FLASH_ADDR 0
 #define SETTINGS_DISPLAY_SIZE 7
@@ -30,20 +31,21 @@ struct settings_display
     const char * fmt;
     int type;
     void  *value;
+    const char * name;
 };
 
 static struct settings_display settings_display_list[] = 
 {
-    {" Mash target %.1f C", FLOAT, &g_settings.mash_target_temp},
-    {" Mash time   %d min", UINT8, &g_settings.mash_time},
-    {" Mash duty   %d %%",  UINT8, &g_settings.mash_duty_cycle},
-    {" Mash out time %d" ,  UINT8, &g_settings.mash_out_time},
-    {" Boil time   %d min", UINT8, &g_settings.boil_time},
-    {" Boil duty   %d %%",  UINT8, &g_settings.boil_duty_cycle},
-    {" Hop time 1  %d min", UINT8, &g_settings.hop_addition[0]},
-    {" Hop time 2  %d min", UINT8, &g_settings.hop_addition[1]},
-    {" Hop time 3  %d min", UINT8, &g_settings.hop_addition[2]},
-    {NULL, 0, NULL}
+    {" Mash target %.1f C", FLOAT, &g_settings.mash_target_temp, "mash_target_temp"},
+    {" Mash time   %d min", UINT8, &g_settings.mash_time,        "mash_time"},
+    {" Mash duty   %d %%",  UINT8, &g_settings.mash_duty_cycle,  "mash_duty_cycle"},
+    {" Mash out time %d" ,  UINT8, &g_settings.mash_out_time,    "mash_out_time"},
+    {" Boil time   %d min", UINT8, &g_settings.boil_time,        "boil_time"},
+    {" Boil duty   %d %%",  UINT8, &g_settings.boil_duty_cycle,  "boil_duty_cycle"},
+    {" Hop time 1  %d min", UINT8, &g_settings.hop_addition[0],  "hop_addition_1"},
+    {" Hop time 2  %d min", UINT8, &g_settings.hop_addition[1],  "hop_addition_2"},
+    {" Hop time 3  %d min", UINT8, &g_settings.hop_addition[2],  "hop_addition_3"},
+    {NULL, 0, NULL, NULL}
 };
 
 #define SETTINGS_MENU_LEN 9
@@ -183,4 +185,54 @@ unsigned short generate_http_settings( void *arg )
     }
     index += sprintf(uip_appdata + index, "</pre></font>\n");
     return strlen( uip_appdata );
+}
+
+char update_message[30];
+
+void settings_shell_display()
+{
+    int ii;
+    for (ii = 0;
+	 settings_display_list[ii].fmt != NULL;
+	 ii++)
+    {
+	struct settings_display *disp = &settings_display_list[ii];
+	if (disp->type == FLOAT)
+	{
+	    sprintf(update_message, disp->fmt, *((float *)disp->value));
+	}
+	else if (disp->type == UINT8)
+	{
+	    sprintf(update_message, disp->fmt, *((uint8_t *)disp->value));
+	}
+	shell_printf("%s\t%s", disp->name, update_message);
+    }
+}
+
+char * settings_update(const char *name, const char *value)
+{
+    int ii;
+    for (ii = 0;
+	 settings_display_list[ii].fmt != NULL;
+	 ii++)
+    {
+	struct settings_display *disp = &settings_display_list[ii];
+
+	if (strcmp(name, disp->name) == 0)
+	{
+	    if (disp->type == FLOAT)
+	    {
+		*((float *)disp->value) = atof(value);
+		sprintf(update_message, disp->fmt, *((float *)disp->value));
+	    }
+	    else if (disp->type == UINT8)
+	    {
+		*((uint8_t *)disp->value) = atoi(value);
+		sprintf(update_message, disp->fmt, *((uint8_t *)disp->value));
+	    }
+	    settings_save();
+	    return update_message;
+	}
+    }
+    return "Setting not found.";
 }

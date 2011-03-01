@@ -271,7 +271,7 @@ void brew_boil_hops(int init)
 	    hops_drop(ii, brew_error_handler);
 	}
     }
-    lcd_printf(0, 5, 19, "%.2d:%.2d Remaining", remain / 60, remain % 60);
+    lcd_printf(0, 4, 19, "%.2d:%.2d Remaining", remain / 60, remain % 60);
 
     brew_next_step_if (remain <= 0);
 }
@@ -279,13 +279,17 @@ void brew_boil_hops(int init)
 // STEP 10
 void brew_finish(int init)
 {
+    static int beep_freq = 100;
+
     if (init)
     {
 	heat_stop();
     }
     else
     {
-
+	audio_beep(beep_freq, 400);
+	if ((beep_freq += 10) > 3000)
+	    beep_freq = 100;
     }
 }
 
@@ -319,7 +323,8 @@ void brew_iterate_cb(brew_task_t *bt)
     vTaskDelay(100);
 
     // display the total run time
-    lcd_printf(14, 0, 5, "%.2d:%.2d", g_state.total_runtime / 60, g_state.total_runtime % 60);
+    if (g_state.step != BREW_STEPS_TOTAL - 1)
+	lcd_printf(14, 0, 5, "%.2d:%.2d", g_state.total_runtime / 60, g_state.total_runtime % 60);
 }
 
 void brew_stop_cb(brew_task_t *bt)

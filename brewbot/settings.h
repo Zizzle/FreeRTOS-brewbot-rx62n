@@ -34,7 +34,8 @@ void settings_display(int init);
 int settings_key_handler(unsigned char key);
 
 unsigned short generate_http_settings( void *arg );
-
+void settings_shell_display();
+char * settings_update(const char *name, const char *value);
 
 extern struct settings g_settings;
 

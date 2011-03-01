@@ -228,7 +228,7 @@ void INT_Excep_TPU8_TGI8A(void){ }
 void INT_Excep_TPU8_TGI8B(void){ }
 
 // TPU8_TCI8V
-void INT_Excep_TPU8_TCI8V(void){ }
+//void INT_Excep_TPU8_TCI8V(void){ }
 
 // TPU8_TCI8U
 void INT_Excep_TPU8_TCI8U(void){ }

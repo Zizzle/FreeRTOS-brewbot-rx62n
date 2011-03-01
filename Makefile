@@ -40,6 +40,7 @@ CFILES_ENET = \
 	brewbot/network-apps/uIP_Task.c \
 	brewbot/drivers/ds1820.c \
 	brewbot/drivers/spi.c \
+	brewbot/drivers/audio.c \
 	brewbot/drivers/p5q.c \
 	brewbot/drivers/lcd.c \
 	brewbot/drivers/font_x5x7.c \

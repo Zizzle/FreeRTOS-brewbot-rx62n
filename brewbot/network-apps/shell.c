@@ -39,8 +39,9 @@
 #include <stdarg.h>
 
 #include "p5q.h"
-
 #include "fatfs/ff.h"
+#include "settings.h"
+#include "audio.h"
 
 extern FATFS Fatfs;
 
@@ -85,7 +86,6 @@ static void parse(register char *str, struct ptentry *t)
 	    shell_printf("Need %d arguments", p->num_args);
 	}
     }
-
     p->pfunc(str);
 }
 /*---------------------------------------------------------------------------*/
@@ -271,20 +271,46 @@ static void cat(char *str)
     f_close(&File1);    
 }
 
+static void settings(char *str)
+{
+    settings_shell_display();
+}
+
+static void settings_set(char *str)
+{
+    char *second = strchr(str, ' ');
+    if (second == NULL)
+    {
+	shell_printf("Need 2 arguments");
+	return;
+    }
+
+    *second = 0; // terminate the first argument
+    shell_printf("%s", settings_update(str, second + 1));
+}
+
+static void beep(char *str)
+{
+    audio_beep(atoi(str), 300);
+}
+
 /*---------------------------------------------------------------------------*/
 static struct ptentry parsetab[] =
 {
-    {"stats", help, 0},
-    {"conn", help, 0},
-    {"help", help, 0},
-    {"mkfs", mkfs, 0},
-    {"mkdir", mkdir, 1},
-    {"cd",    cd, 1},
-    {"cat",   cat, 1},
-    {"pwd",   pwd, 0},
-    {"exit", shell_quit, 0},
-    {"ls",   ls, 0},
-    {"?", help},
+    {"stats",    help,         0},
+    {"conn",     help,         0},
+    {"help",     help,         0},
+    {"mkfs",     mkfs,         0},
+    {"mkdir",    mkdir,        1},
+    {"cd",       cd,           1},
+    {"cat",      cat,          1},
+    {"pwd",      pwd,          0},
+    {"ls",       ls,           0},
+    {"settings", settings,     0},
+    {"set",      settings_set, 2},
+    {"beep",     beep,         1},
+    {"exit",     shell_quit,   0},
+    {"?",        help},
     {NULL, unknown}
 };
 /*---------------------------------------------------------------------------*/

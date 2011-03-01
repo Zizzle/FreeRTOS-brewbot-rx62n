@@ -77,6 +77,8 @@ static void menu_update(void)
     }
 */
     lcd_text(0,0, crumbs);
+
+    
 }
 
 void menu_set_root(struct menu *root_menu)
