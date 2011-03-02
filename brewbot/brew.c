@@ -29,6 +29,9 @@
 #include "crane.h"
 #include "fatfs/ff.h"
 #include "brewbot.h"
+#include "audio.h"
+#include "net/uip.h"
+#include "level_probes.h"
 
 #define TICKS_PER_MINUTE (60 * configTICK_RATE_HZ)
 
@@ -53,18 +56,22 @@ static struct state
     long         total_runtime;  // seconds since the start of the brew
     long         step_runtime;   // seconds since the start of the current step
     uint8_t      hop_addition_done[MAX_HOP_ADDITIONS];
+    FIL          log_file;
 } g_state = { 0, 0, 0, 0};
 
 static void brew_log(char *fmt, ...)
 {
-    char message[40];
-    UINT written;
-    va_list ap;
-    va_start(ap, fmt);
-    int len = vsnprintf(message, sizeof(message) - 1, fmt, ap);
-    va_end(ap);
+    if (g_state.log_file.fs)
+    {
+	char message[40];
+	UINT written;
+	va_list ap;
+	va_start(ap, fmt);
+	int len = vsnprintf(message, sizeof(message) - 1, fmt, ap);
+	va_end(ap);
 
-//    f_write(&g_state.file, message, len, &written);
+	f_write(&g_state.log_file, message, len, &written);
+    }
 }
 
 static const char *brew_step_name(unsigned char step)
@@ -82,6 +89,7 @@ static void brew_run_step()
     lcd_clear();
 
     lcd_printf(0, 0, 14, "%d.%s", g_state.step, g_steps[g_state.step].name);
+    brew_log   ("Run step %d.%s", g_state.step, g_steps[g_state.step].name);
 }
 
 static void brew_next_step()
@@ -109,6 +117,9 @@ void brew_error_handler(brew_task_t *bt)
     lcd_printf(0, 3, 18, "in step %d %s", g_state.step, brew_step_name(g_state.step));
     lcd_printf(0, 4, 18, "Error = %s", bt->error);
     brew_task.error = "Failed";
+
+    brew_log   ("Error %s task failed %s", bt->name, bt->error);
+    audio_beep(1000, 1000);
 }
 
 // STEP 1
@@ -400,4 +411,26 @@ int brew_resume_key(unsigned char key)
         lcd_printf(0,  4, 19, " %s", brew_step_name(g_state.step));
     }
     return 1;
+}
+
+unsigned short httpd_get_status(void *arg)
+{
+    unsigned short len = 0;
+    len += sprintf((char *) uip_appdata + len, "<pre>\n");
+    len += sprintf((char *) uip_appdata + len, "Brew is running: %s\n", brew_task.running ? "yes" : "no");
+    len += sprintf((char *) uip_appdata + len, "Brew step: %d %s\n", g_state.step, brew_step_name(g_state.step) );
+    len += sprintf((char *) uip_appdata + len, "Brew overall runtime %.2ld:%.2ld\n", g_state.total_runtime / 60, g_state.total_runtime % 60);
+    len += sprintf((char *) uip_appdata + len, "Brew step runtime %.2ld:%.2ld\n", g_state.step_runtime / 60, g_state.step_runtime % 60);
+    len += sprintf((char *) uip_appdata + len, "\nHardware:\n");
+    len += sprintf((char *) uip_appdata + len, "Crane moving:     %d\n", crane_is_moving());
+    len += sprintf((char *) uip_appdata + len, "Crane up:         %d\n", crane_is_at_top());
+    len += sprintf((char *) uip_appdata + len, "Crane down:       %d\n", crane_is_at_bottom());
+    len += sprintf((char *) uip_appdata + len, "Crane left:       %d\n", crane_is_at_left());
+    len += sprintf((char *) uip_appdata + len, "Crane right:      %d\n", crane_is_at_right());
+    len += sprintf((char *) uip_appdata + len, "Fill running:     %d\n", fill_is_running());
+    len += sprintf((char *) uip_appdata + len, "Level probe heat: %d ADC %d\n", level_hit_heat(), level_probe_heat_adc());
+    len += sprintf((char *) uip_appdata + len, "Level probe full: %d ADC %d\n", level_hit_full(), level_probe_full_adc());
+    len += sprintf((char *) uip_appdata + len, "Heat running:     %d\n", heat_task_is_running());
+    len += sprintf((char *) uip_appdata + len, "</pre>\n");
+    return len;
 }

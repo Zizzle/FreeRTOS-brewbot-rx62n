@@ -22,6 +22,7 @@ typedef struct recipie
 int recipie_load(const char *name, recipe_t *rec);
 
 unsigned short httpd_generate_recipe_list( void *arg );
+unsigned short httpd_generate_recipe(void *arg);
 
 
 #endif

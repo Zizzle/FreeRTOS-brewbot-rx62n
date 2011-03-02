@@ -37,11 +37,15 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "p5q.h"
 #include "fatfs/ff.h"
 #include "settings.h"
 #include "audio.h"
+#include "net/uip.h"
+#include "menu.h"
+#include "buttons.h"
 
 extern FATFS Fatfs;
 
@@ -294,6 +298,36 @@ static void beep(char *str)
     audio_beep(atoi(str), 300);
 }
 
+static void ps(char *str)
+{
+    extern void vTaskList( signed char *pcWriteBuffer );
+    extern char *pcGetTaskStatusMessage( void );
+    vTaskList( uip_appdata );
+    uip_send(uip_appdata, strlen(uip_appdata));
+    shell_printf("");
+}
+
+static void up(char *str)
+{
+    menu_key(KEY_UP & KEY_PRESSED);
+    menu_key(KEY_UP);
+}
+static void left(char *str)
+{
+    menu_key(KEY_LEFT & KEY_PRESSED);
+    menu_key(KEY_LEFT);
+}
+static void right(char *str)
+{
+    menu_key(KEY_RIGHT & KEY_PRESSED);
+    menu_key(KEY_RIGHT);
+}
+static void down(char *str)
+{
+    menu_key(KEY_DOWN & KEY_PRESSED);
+//    menu_key(KEY_DOWN);
+}
+
 /*---------------------------------------------------------------------------*/
 static struct ptentry parsetab[] =
 {
@@ -306,9 +340,14 @@ static struct ptentry parsetab[] =
     {"cat",      cat,          1},
     {"pwd",      pwd,          0},
     {"ls",       ls,           0},
+    {"ps",       ps,           0},
     {"settings", settings,     0},
     {"set",      settings_set, 2},
     {"beep",     beep,         1},
+    {"up",       up,           0},
+    {"down",     down,         0},
+    {"left",     left,         0},
+    {"right",    right,        0},
     {"exit",     shell_quit,   0},
     {"?",        help},
     {NULL, unknown}

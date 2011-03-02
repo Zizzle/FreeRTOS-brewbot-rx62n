@@ -385,7 +385,7 @@ static void _newdata(void)
     else if (!strcmp(cmd,cmd_cwd_P)) {
 	if (f_chdir(arg) == FR_OK)
 	{
-	    prep_response(ftps, "200 directory changed to /.\r\n", FTPDREC_CWD, FTPDANS_CWD, FTPDSTS_SENDING_CTLANS);
+	    prep_response(ftps, "200 directory changed.\r\n", FTPDREC_CWD, FTPDANS_CWD, FTPDSTS_SENDING_CTLANS);
 	}
 	else
 	{

@@ -181,7 +181,7 @@ unsigned short generate_http_settings( void *arg )
 	{
 	    index += sprintf(uip_appdata + index, disp->fmt, *((uint8_t *)disp->value));
 	}
-	index += sprintf(uip_appdata + index, "<br>\n");
+	index += sprintf(uip_appdata + index, "\n");
     }
     index += sprintf(uip_appdata + index, "</pre></font>\n");
     return strlen( uip_appdata );

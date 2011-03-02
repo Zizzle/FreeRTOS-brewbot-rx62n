@@ -128,6 +128,10 @@ struct timer periodic_timer, arp_timer;
 	uip_sethostaddr( &xIPAddr );
 	uip_ipaddr( &xIPAddr, configNET_MASK0, configNET_MASK1, configNET_MASK2, configNET_MASK3 );
 	uip_setnetmask( &xIPAddr );
+
+	uip_ipaddr( &xIPAddr, configIP_ADDR0, configIP_ADDR1, configIP_ADDR2, 1 );
+	uip_setdraddr(&xIPAddr);
+
 	prvSetMACAddress();
 
 	httpd_init();
@@ -242,36 +246,42 @@ struct uip_eth_addr xAddr;
 }
 /*-----------------------------------------------------------*/
 
+char reqParams[1024];
+
 void vApplicationProcessFormInput( char *pcInputString )
 {
-#if 0
-char *c;
+    char *c;
 
-	/* Process the form input sent by the IO page of the served HTML. */
+    reqParams[0] = 0;
 
-	c = strstr( pcInputString, "?" );
+    /* Process the form input sent by the IO page of the served HTML. */
+    c = strstr( pcInputString, "?" );
     if( c )
     {
-		/* Turn the LED's on or off in accordance with the check box status. */
-		if( strstr( c, "LED0=1" ) != NULL )
-		{
-			/* Turn LEDs on. */
-			vParTestSetLED( 7, 1 );
-			vParTestSetLED( 8, 1 );
-			vParTestSetLED( 9, 1 );
-			vParTestSetLED( 10, 1 );
-		}
-		else
-		{
-			/* Turn LED 4 off. */
-			vParTestSetLED( 7, 0 );
-			vParTestSetLED( 8, 0 );
-			vParTestSetLED( 9, 0 );
-			vParTestSetLED( 10, 0 );
-		}
+	char *in  = c + 1;
+	char *out = reqParams;
+
+	while (*in && out < reqParams + sizeof(reqParams))
+	{
+	    if (in[0] == '%' && in[1] == '2' && in[2] == '0')
+	    {
+		*out++ = ' ';
+		in += 3;
+	    }
+	    else if (in[0] == '+')
+	    {
+		*out++ = ' ';
+		in++;
+	    }
+	    else
+	    {
+		*out++ = *in++;
+	    }
+	}
     }
-#endif
 }
+
+
 
 void httpd_appcall( void );
 

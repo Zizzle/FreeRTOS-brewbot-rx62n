@@ -53,17 +53,18 @@
 
 #include "settings.h"
 #include "recipes.h"
+#include "brew.h"
 
 HTTPD_CGI_CALL( file, "file-stats", file_stats );
 HTTPD_CGI_CALL( tcp, "tcp-connections", tcp_stats );
 HTTPD_CGI_CALL( net, "net-stats", net_stats );
 HTTPD_CGI_CALL( rtos, "rtos-stats", rtos_stats );
 HTTPD_CGI_CALL( run, "run-time", run_time );
-HTTPD_CGI_CALL( io, "led-io", led_io );
-
+HTTPD_CGI_CALL( settings, "show-settings", show_settings );
 HTTPD_CGI_CALL( recipes, "show-recipes", show_recipes);
-
-static const struct httpd_cgi_call	*calls[] = { &file, &tcp, &net, &rtos, &run, &io, &recipes, NULL };
+HTTPD_CGI_CALL( recipe,  "show-recipe",  show_recipe);
+HTTPD_CGI_CALL( status,  "show-status",  show_status);
+static const struct httpd_cgi_call	*calls[] = { &file, &tcp, &net, &rtos, &run, &settings, &recipes, &recipe, &status, NULL };
 
 /*---------------------------------------------------------------------------*/
 static PT_THREAD( nullfunction ( struct httpd_state *s, char *ptr ) )
@@ -261,7 +262,7 @@ static PT_THREAD( run_time ( struct httpd_state *s, char *ptr ) )
 }
 
 /*---------------------------------------------------------------------------*/
-static PT_THREAD( led_io ( struct httpd_state *s, char *ptr ) )
+static PT_THREAD( show_settings ( struct httpd_state *s, char *ptr ) )
 {
 	PSOCK_BEGIN( &s->sout );
 	( void ) ptr;
@@ -271,12 +272,32 @@ static PT_THREAD( led_io ( struct httpd_state *s, char *ptr ) )
 }
 
 /*---------------------------------------------------------------------------*/
-
 static PT_THREAD( show_recipes ( struct httpd_state *s, char *ptr ) )
 {
 	PSOCK_BEGIN( &s->sout );
 	( void ) ptr;
 	( void ) PT_YIELD_FLAG;
 	PSOCK_GENERATOR_SEND( &s->sout, httpd_generate_recipe_list, NULL );
+	PSOCK_END( &s->sout );
+}
+
+/*---------------------------------------------------------------------------*/
+static PT_THREAD( show_recipe ( struct httpd_state *s, char *ptr ) )
+{
+	PSOCK_BEGIN( &s->sout );
+	( void ) ptr;
+	( void ) PT_YIELD_FLAG;
+	PSOCK_GENERATOR_SEND( &s->sout, httpd_generate_recipe, NULL );
+	PSOCK_END( &s->sout );
+}
+
+
+/*---------------------------------------------------------------------------*/
+static PT_THREAD( show_status ( struct httpd_state *s, char *ptr ) )
+{
+	PSOCK_BEGIN( &s->sout );
+	( void ) ptr;
+	( void ) PT_YIELD_FLAG;
+	PSOCK_GENERATOR_SEND( &s->sout, httpd_get_status, NULL );
 	PSOCK_END( &s->sout );
 }

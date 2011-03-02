@@ -17,4 +17,6 @@ int  brew_key_handler(unsigned char key);
 void brew_resume(int init);
 int  brew_resume_key(unsigned char key);
 
+unsigned short httpd_get_status(void *arg);
+
 #endif

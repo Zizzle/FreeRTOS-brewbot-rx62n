@@ -15,7 +15,11 @@
 #include "recipes.h"
 #include "net/uip.h"
 
+extern char reqParams[];
+
 static FIL file;
+
+static int len;
 
 static void parse_recipe_line(char *line, recipe_t *rec)
 {
@@ -28,8 +32,10 @@ static void parse_recipe_line(char *line, recipe_t *rec)
 int recipe_load(const char *name, recipe_t *rec)
 {
     FRESULT result;
-    char line[50];
+    char line[80];
     snprintf(line, sizeof(line), "%s/%s/recipe.txt", RECIPE_PATH, name);
+
+    strcpy(rec->name, "Unknown");
 
     result = f_open(&file, line, FA_READ);
     if (result != FR_OK)
@@ -39,21 +45,39 @@ int recipe_load(const char *name, recipe_t *rec)
 
     while (f_gets (line, sizeof(line), &file) != NULL)
     {
+	len += sprintf((char *) uip_appdata + len, "%s", line);
 	parse_recipe_line(line, rec);
     }
+    f_close(&file);
     return 1;
+}
+
+static void http_create_recipe()
+{
+    char *input  = reqParams;
+
+    char *token;
+
+    while ((token = strtok(input, "&")))
+    {
+	input = NULL;
+
+	
+    }
 }
 
 unsigned short httpd_generate_recipe_list( void *arg )
 {
     unsigned short len = 0;
-
-#if 0
-
     DIR dir;
     FILINFO fno;
     recipe_t recipe;
     FRESULT result = f_opendir (&dir, RECIPE_PATH);
+
+    if (reqParams[0] != 0)
+    {
+	http_create_recipe();
+    }
 
     if (result != FR_OK)
     {
@@ -67,11 +91,34 @@ unsigned short httpd_generate_recipe_list( void *arg )
 	if ( ! (fno.fattrib & AM_DIR)) continue; // only care about directories
 
 	recipe_load(fno.fname, &recipe);
-	len += sprintf((char *) uip_appdata + len, "<li><a href=\"\">%s</a></li>\n", recipe.name);
+	len += sprintf((char *) uip_appdata + len, "<li><a href=\"/html/recipe.sht?name=%s\">%s</a></li>\n", fno.fname, recipe.name);
     }	
-#else
-	len += sprintf((char *) uip_appdata + len, "<li><a href=\"\">%s</a></li>\n", "blah");
-#endif
 
+//    len += sprintf((char *) uip_appdata + len, "params = %s", reqParams);
+    
+    return len;
+}
+
+unsigned short httpd_generate_recipe(void *arg)
+{
+    recipe_t recipe;
+
+    char *name = strstr(reqParams, "name=");
+
+    if (name == NULL)
+    {
+	return sprintf((char *) uip_appdata + len, "Please include recipe name in URL\n");	
+    }
+
+    len = 0;
+    len += sprintf((char *) uip_appdata + len, "<pre>\n");
+    if (!recipe_load(name +5, &recipe))
+    {
+	return sprintf((char *) uip_appdata + len, "Recipe not found\n");	
+    }
+
+    //len += sprintf((char *) uip_appdata + len, "<h1>%s</h1>\n", recipe.name);
+
+    len += sprintf((char *) uip_appdata + len, "</pre><p><a href=\"/html/start.sht?%s\">Brew this now</a>\n", name);
     return len;
 }
