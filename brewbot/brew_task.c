@@ -102,3 +102,8 @@ portBASE_TYPE brewTaskStop(brew_task_t *task)
     start_stop_t ss = STOP;
     return xQueueSend( task->startStopQueue, &ss, 1);
 }
+
+portTickType brewTaskTick(brew_task_t *task)
+{
+    return xTaskGetTickCount() - task->startTick;
+}

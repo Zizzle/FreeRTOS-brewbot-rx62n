@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-// Copyright (C) 2011, Matthew Pratt, All Rights Reserved.
+// Copyright (C) 2011, Matthew Pratt, licensed under the GPL3+.
 //
 // Authors: Matthew Pratt
 //
@@ -32,8 +32,10 @@
 #include "audio.h"
 #include "net/uip.h"
 #include "level_probes.h"
+#include "logging.h"
 
 #define TICKS_PER_MINUTE (60 * configTICK_RATE_HZ)
+#define BREW_LOG_PATH "/brews"
 
 brew_task_t brew_task;
 
@@ -48,6 +50,7 @@ static struct brew_step g_steps[BREW_STEPS_TOTAL];
 
 static struct state
 {
+    int          brew_number;
     char         in_alarm;
     uint8_t      step;
     uint8_t      graphx;
@@ -58,21 +61,6 @@ static struct state
     uint8_t      hop_addition_done[MAX_HOP_ADDITIONS];
     FIL          log_file;
 } g_state = { 0, 0, 0, 0};
-
-static void brew_log(char *fmt, ...)
-{
-    if (g_state.log_file.fs)
-    {
-	char message[40];
-	UINT written;
-	va_list ap;
-	va_start(ap, fmt);
-	int len = vsnprintf(message, sizeof(message) - 1, fmt, ap);
-	va_end(ap);
-
-	f_write(&g_state.log_file, message, len, &written);
-    }
-}
 
 static const char *brew_step_name(unsigned char step)
 {
@@ -89,7 +77,9 @@ static void brew_run_step()
     lcd_clear();
 
     lcd_printf(0, 0, 14, "%d.%s", g_state.step, g_steps[g_state.step].name);
-    brew_log   ("Run step %d.%s", g_state.step, g_steps[g_state.step].name);
+    log_brew(&g_state.log_file, "%.2d:%.2d Run step %d.%s\n",
+	     g_state.total_runtime / 60, g_state.total_runtime % 60,
+	     g_state.step, g_steps[g_state.step].name);
 }
 
 static void brew_next_step()
@@ -118,7 +108,9 @@ void brew_error_handler(brew_task_t *bt)
     lcd_printf(0, 4, 18, "Error = %s", bt->error);
     brew_task.error = "Failed";
 
-    brew_log   ("Error %s task failed %s", bt->name, bt->error);
+    log_brew(&g_state.log_file, "%.2d:%.2d Error %s task failed %s\n",
+	     g_state.total_runtime / 60, g_state.total_runtime % 60,
+	     bt->name, bt->error);
     audio_beep(1000, 1000);
 }
 
@@ -142,7 +134,7 @@ void brew_fill_and_heat(int init)
 {
     if (init)
     {
-	heat_start(brew_error_handler);
+	heat_start(brew_error_handler, BREW_LOG_PATH, g_state.brew_number);
 	heat_set_target_temperature(g_settings.mash_target_temp);
 	heat_set_dutycycle(70);
 	fill_start(brew_error_handler);
@@ -157,7 +149,7 @@ void brew_crane_to_mash(int init)
     {
 	crane_move(DIRECTION_RIGHT, brew_error_handler);
 
-	heat_start(brew_error_handler);
+	heat_start(brew_error_handler, BREW_LOG_PATH, g_state.brew_number);
 	heat_set_target_temperature(g_settings.mash_target_temp);
 	heat_set_dutycycle(g_settings.mash_duty_cycle);
     }
@@ -171,7 +163,7 @@ void brew_mash_in(int init)
     {
 	crane_move(DIRECTION_DOWN, brew_error_handler);
 
-	heat_start(brew_error_handler);
+	heat_start(brew_error_handler, BREW_LOG_PATH, g_state.brew_number);
 	heat_set_target_temperature(g_settings.mash_target_temp);
 	heat_set_dutycycle(g_settings.mash_duty_cycle);
     }
@@ -187,7 +179,7 @@ void brew_mash(int init)
 	STIRRER_DDR = 1;
 	outputOn(STIRRER);
 
-	heat_start(brew_error_handler);
+	heat_start(brew_error_handler, BREW_LOG_PATH, g_state.brew_number);
 	heat_set_target_temperature(g_settings.mash_target_temp);
 	heat_set_dutycycle(g_settings.mash_duty_cycle);
     }
@@ -206,7 +198,7 @@ void brew_mash_out(int init)
 
     if (init)
     {
-	heat_start(brew_error_handler);
+	heat_start(brew_error_handler, BREW_LOG_PATH, g_state.brew_number);
 	heat_set_target_temperature(90.0f);
 	heat_set_dutycycle(g_settings.boil_duty_cycle);
     }
@@ -237,7 +229,7 @@ void brew_to_boil(int init)
 {
     if (init)
     {
-	heat_start(brew_error_handler);
+	heat_start(brew_error_handler, BREW_LOG_PATH, g_state.brew_number);
 	heat_set_target_temperature(90.0f);
 	heat_set_dutycycle(g_settings.boil_duty_cycle);
     }
@@ -250,7 +242,7 @@ void brew_boil_stabilise(int init)
     if (init)
     {
 	crane_move(DIRECTION_LEFT, brew_error_handler);
-	heat_start(brew_error_handler);
+	heat_start(brew_error_handler, BREW_LOG_PATH, g_state.brew_number);
 	heat_set_target_temperature(101.0f);
 	heat_set_dutycycle(g_settings.boil_duty_cycle);
     }
@@ -345,6 +337,14 @@ void brew_stop_cb(brew_task_t *bt)
     heat_stop();
     crane_stop();
     STIRRER_DDR = 0;
+    log_close(&g_state.log_file);
+}
+
+static void do_brew_start(int resume)
+{
+    g_state.brew_number = log_find_max_number(BREW_LOG_PATH) + (resume == 0);
+    log_open(BREW_LOG_PATH, g_state.brew_number, "brew_log.txt", &g_state.log_file);
+    brewTaskStart(&brew_task, NULL);
 }
 
 void brew_start(int init)
@@ -353,10 +353,11 @@ void brew_start(int init)
     {
 	g_state.brew_start_tick = xTaskGetTickCount();
 	g_state.step = 0;
-	brewTaskStart(&brew_task, NULL);
+	do_brew_start(0);
     }
     else
     {
+	log_brew(&g_state.log_file, "%.2d:%.2d Brew stopped\n", g_state.total_runtime / 60, g_state.total_runtime % 60);
 	brewTaskStop(&brew_task);	
     }  
 }
@@ -386,6 +387,7 @@ void brew_resume(int init)
     }
     else
     {
+	log_brew(&g_state.log_file, "%.2d:%.2d Brew stopped\n", g_state.total_runtime / 60, g_state.total_runtime % 60);
 	brewTaskStop(&brew_task);
     }
 }
@@ -403,7 +405,7 @@ int brew_resume_key(unsigned char key)
     if (key & KEY_RIGHT)
     {
         menu_run_applet(brew_key_handler);
-	brewTaskStart(&brew_task, NULL);
+	do_brew_start(1);
     }
     else
     {
@@ -432,5 +434,7 @@ unsigned short httpd_get_status(void *arg)
     len += sprintf((char *) uip_appdata + len, "Level probe full: %d ADC %d\n", level_hit_full(), level_probe_full_adc());
     len += sprintf((char *) uip_appdata + len, "Heat running:     %d\n", heat_task_is_running());
     len += sprintf((char *) uip_appdata + len, "</pre>\n");
+    len += sprintf((char *) uip_appdata + len, "<a href=\"/brews/%d/brew_log.txt\">View brew log</a>\n", g_state.brew_number);
+    len += sprintf((char *) uip_appdata + len, "<a href=\"/brews/%d/heat_log.txt\">View heat log</a>\n", g_state.brew_number);    
     return len;
 }

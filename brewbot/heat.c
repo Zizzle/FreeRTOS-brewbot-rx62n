@@ -8,6 +8,9 @@
 #include "level_probes.h"
 #include <stdio.h>
 #include "brew_task.h"
+#include "fatfs/ff.h"
+#include "logging.h"
+
 static void display_status();
 
 #define NUM_READINGS 5
@@ -19,6 +22,18 @@ static volatile uint8_t heat_target_reached;
 static float heat_readings[NUM_READINGS];
 static uint8_t heat_reading_idx;
 static uint8_t heat_reading_cnt;
+static FIL log_file;
+
+static void heat_log()
+{
+    log_brew(&log_file, "%d,%.2f,%.1f,%d,%d,%d\n",
+	     brewTaskTick(&heat_task),
+	     (double)ds1820_get_temperature(),
+	     heat_target,
+	     heat_target_reached,
+	     heat_duty_cycle,
+	     SSR);
+}
 
 static void allOff()
 {
@@ -36,6 +51,8 @@ static void display_status()
     lcd_printf(0, 6, 18, "Temp %.2f (%d%)",
 	       (double)ds1820_get_temperature(), heat_duty_cycle);
     lcd_printf(0, 7, 19, "Probe: %d %d",level_hit_heat(), level_probe_heat_adc());
+
+    heat_log();
 }
 
 static void heat_keep_temperature()
@@ -138,14 +155,28 @@ void heat_start_task()
 		  _heat_stop);
 }
 
-void heat_start(void (*taskErrorHandler)(brew_task_t *))
+static int heat_set_log_file(const char *dir, int number)
 {
+    int result = log_open(dir, number, "heat_log.txt", &log_file);
+    if (result == 0 && log_file.fsize == 0)
+	log_brew(&log_file, "Ticks,Temp,Target,Hit,Duty\n");
+    return result;
+}
+
+void heat_start(void (*taskErrorHandler)(brew_task_t *), const char *log_dir, int log_number)
+{
+    if (log_file.fs == 0)
+	heat_set_log_file(log_dir, log_number);
+
     brewTaskStart(&heat_task, taskErrorHandler);
+    //log_brew(&log_file, "%d,Starting", brewTaskTick(&heat_task));
 }
 
 void heat_stop()
 {
     brewTaskStop(&heat_task);
+    log_brew(&log_file, "%d,Stopped", brewTaskTick(&heat_task));
+    log_close(&log_file);
 }
 
 char heat_task_is_running()

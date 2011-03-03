@@ -181,9 +181,9 @@ static void ls(char * str)
     fre_sect = fre_clust * fs->csize;
 
     /* Print free space in unit of KB (assuming 512 bytes/sector) */
-    shell_printf("%lu KB total drive space.\n"
+    shell_printf("%lu KB total.\n"
 		 "%lu KB available.\n",
-		 fre_sect / 2, tot_sect / 2);
+		 tot_sect / 2, fre_sect / 2);
 
 }
 
@@ -328,6 +328,15 @@ static void down(char *str)
 //    menu_key(KEY_DOWN);
 }
 
+static void rm(char *str)
+{
+    FRESULT result = f_unlink(str);
+    if (result != FR_OK)
+    {
+	shell_printf("Failed %d", result);
+    }
+}
+
 /*---------------------------------------------------------------------------*/
 static struct ptentry parsetab[] =
 {
@@ -340,6 +349,7 @@ static struct ptentry parsetab[] =
     {"cat",      cat,          1},
     {"pwd",      pwd,          0},
     {"ls",       ls,           0},
+    {"rm",       rm,           1},
     {"ps",       ps,           0},
     {"settings", settings,     0},
     {"set",      settings_set, 2},

@@ -38,4 +38,6 @@ void startBrewTask(brew_task_t *task,
 portBASE_TYPE brewTaskStart(brew_task_t *task, void (*taskErrorHandler)(brew_task_t *));
 portBASE_TYPE brewTaskStop (brew_task_t *task);
 
+portTickType brewTaskTick(brew_task_t *task);
+
 #endif

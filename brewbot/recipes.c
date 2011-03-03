@@ -15,6 +15,8 @@
 #include "recipes.h"
 #include "net/uip.h"
 
+#include "shell.h"
+
 extern char reqParams[];
 
 static FIL file;
@@ -37,9 +39,11 @@ int recipe_load(const char *name, recipe_t *rec)
 
     strcpy(rec->name, "Unknown");
 
+
     result = f_open(&file, line, FA_READ);
     if (result != FR_OK)
     {
+	shell_printf("%s", line);
 	return 0;	
     }
 

@@ -14,7 +14,7 @@
 #include "brew_task.h"
 
 void    heat_start_task();
-void    heat_start(void (*taskErrorHandler)(brew_task_t *));
+void    heat_start(void (*taskErrorHandler)(brew_task_t *), const char *log_dir, int log_number);
 void    heat_stop();
 char    heat_task_is_running();
 uint8_t heat_has_reached_target();

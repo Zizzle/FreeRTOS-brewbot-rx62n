@@ -48,6 +48,7 @@ CFILES_ENET = \
 	brewbot/fatfs/ff.c \
 	brewbot/fatfs/diskio.c \
 	brewbot/hop_droppers.c \
+	brewbot/logging.c \
 	brewbot/crane.c \
 	brewbot/menu.c \
 	brewbot/fill.c \

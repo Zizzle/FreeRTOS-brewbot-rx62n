@@ -20,6 +20,8 @@
 #include "fill.h"
 #include "level_probes.h"
 
+#define DIAG_LOG_DIR "/diags"
+
 static float heat_target = 66.0f;
 static int   heat_duty   = 50;
 
@@ -36,7 +38,7 @@ static void diag_heat(int initializing)
 	lcd_text(0, 1, "Heat diagnostic");
 	lcd_text(0, 2, "/\\ \\/ = target temp");
 	lcd_text(0, 3, "< > = duty cycle");
-	heat_start(diag_error_handler);
+	heat_start(diag_error_handler, DIAG_LOG_DIR, 0);
 	heat_set_target_temperature(heat_target);
 	heat_set_dutycycle(heat_duty);
     }
