@@ -258,7 +258,7 @@ static PT_THREAD( handle_output ( struct httpd_state *s ) )
 	( void ) PT_YIELD_FLAG;
 
 	// truncate .html to .htm
-	char	*ptr = strrchr( s->filename, ISO_period );
+	ptr = strrchr( s->filename, ISO_period );
 	if (ptr != NULL) ptr[4] = 0;
 
 

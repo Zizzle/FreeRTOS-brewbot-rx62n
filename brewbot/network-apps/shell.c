@@ -117,23 +117,6 @@ static void mkfs(char *str)
     shell_output(message, "");
 }
 
-
-static void _write(char *str)
-{
-    FIL File1;
-    UINT ByteWritten;
-    FRESULT result  = f_open(&File1, "0:test.txt", FA_OPEN_ALWAYS | FA_WRITE);
-    char message[20];
-    sprintf(message,"result %d", result);
-    shell_output(message, "");
-
-    result = f_write(&File1, "hello world", 12, &ByteWritten);
-    sprintf(message,"result %d %d", result, ByteWritten);
-    shell_output(message, "");
-
-    f_close(&File1);
-}
-
 static void ls(char * str)
 {
     DIR dir;
