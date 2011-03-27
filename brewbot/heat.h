@@ -20,5 +20,6 @@ char    heat_task_is_running();
 uint8_t heat_has_reached_target();
 void    heat_set_target_temperature(float target);
 void    heat_set_dutycycle(int duty_cycle);
+uint8_t heat_is_heating();
 
 #endif

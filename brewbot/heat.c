@@ -201,3 +201,9 @@ void heat_set_dutycycle(int duty_cycle)
     heat_duty_cycle = duty_cycle;
     display_status();
 }
+
+uint8_t heat_is_heating()
+{
+    return ds1820_get_temperature() < heat_target &&
+	level_hit_heat() == 1; // check the element is covered
+}

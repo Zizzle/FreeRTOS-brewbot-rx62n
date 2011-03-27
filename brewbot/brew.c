@@ -176,12 +176,21 @@ void brew_mash(int init)
     long remain = g_settings.mash_time * 60 - g_state.step_runtime;
     if (init)
     {
-	STIRRER_DDR = 1;
 	outputOn(STIRRER);
-
 	heat_start(brew_error_handler, BREW_LOG_PATH, g_state.brew_number);
 	heat_set_target_temperature(g_settings.mash_target_temp);
 	heat_set_dutycycle(g_settings.mash_duty_cycle);
+    }
+
+    STIRRER_DDR = 1;
+
+    if (heat_is_heating())
+    {
+	outputOn(STIRRER);
+    }
+    else
+    {
+	outputOff(STIRRER);
     }
 
     lcd_printf(0, 1, 19, "%.2d:%.2d Elapsed", g_state.step_runtime / 60,
