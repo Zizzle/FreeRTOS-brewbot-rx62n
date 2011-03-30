@@ -7,6 +7,8 @@ The build environmemnt is Fedora 13 with gnurx_v10.03_elf-1-1.i386
 rx-elf-gcc --version
 rx-elf-gcc (GCC) 4.5-GNURX_v10.03
 
+The only other tool needed for the build process is GNU Make.
+
 The Brewbot is an automated homebrew beer system.
 
 Aditional details can be found at http://zizzle-brewbot.blogspot.com/
