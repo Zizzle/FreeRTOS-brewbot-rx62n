@@ -20,7 +20,7 @@ NM = rx-elf-nm
 
 
 TARGET = main
-SOURCES = $(TARGET).c plat.c $(TARGET)_nat.c $(TARGET)_img.c plat_io_stubs.c
+SOURCES = $(TARGET).c $(TARGET)_nat.c $(TARGET)_img.c plat_io_stubs.c
 OBJS = $(SOURCES:.c=.o)
 
 ifeq ($(DEBUG),true)

@@ -320,6 +320,11 @@ static void rm(char *str)
     }
 }
 
+static void python(char *str)
+{
+    py_main();
+}
+
 /*---------------------------------------------------------------------------*/
 static struct ptentry parsetab[] =
 {
@@ -341,6 +346,7 @@ static struct ptentry parsetab[] =
     {"down",     down,         0},
     {"left",     left,         0},
     {"right",    right,        0},
+    {"python",   python,       0},
     {"exit",     shell_quit,   0},
     {"?",        help},
     {NULL, unknown}

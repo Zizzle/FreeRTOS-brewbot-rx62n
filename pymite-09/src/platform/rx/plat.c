@@ -339,5 +339,3 @@ plat_reportError(PmReturn_t result)
     }
 #endif /* HAVE_DEBUG_INFO */
 }
-
-

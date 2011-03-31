@@ -24,6 +24,7 @@ int py_main(void)
     PmReturn_t retval;
 
     retval = pm_init(MEMSPACE_PROG, usrlib_img);
+    printf("blah %d %d\n", retval, retval);
     PM_RETURN_IF_ERROR(retval);
 
     retval = pm_run((uint8_t *)"main");

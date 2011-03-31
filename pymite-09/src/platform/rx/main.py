@@ -20,9 +20,13 @@
 
 print 'hello from python'
 
+dict = {}
+
+dict['foo'] = "bar"
+
 for x in range(3):
-    print "foo"
+    print "foo", dict
 
 
-file = open("hello.txt")
-file.readlines()
+#file = open("hello.txt")
+#file.readlines()
