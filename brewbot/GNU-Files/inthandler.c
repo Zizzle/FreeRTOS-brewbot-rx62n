@@ -13,6 +13,7 @@
 
 
 #include "inthandler.h"
+#include "serial.h"
 
 // Exception(Supervisor Instruction)
 void INT_Excep_SuperVisorInst(void){/* brk(); */}
@@ -33,7 +34,7 @@ void Dummy(void){/* brk(); */}
 void INT_Excep_BRK(void){ /*wait(); */}
 
 // BUSERR
-void INT_Excep_BUSERR(void){ }
+void INT_Excep_BUSERR(void){ serial_puts("bus err\r\n"); }
 
 // FCU_FCUERR
 void INT_Excep_FCU_FCUERR(void){ }

@@ -36,16 +36,21 @@
 #include "telnetd.h"
 #include "memb.h"
 #include "shell.h"
+#include "lcd.h"
+#include "socket_io.h"
+#include "serial.h"
 
 #include <string.h>
+#include <stdlib.h>
+
+#include "FreeRTOS.h"
+#include "queue.h"
+#include "task.h"
+
+#include "types.h"
 
 #define ISO_nl       0x0a
 #define ISO_cr       0x0d
-
-struct telnetd_line {
-  char line[TELNETD_CONF_LINELEN];
-};
-MEMB(linemem, struct telnetd_line, TELNETD_CONF_NUMLINES);
 
 #define STATE_NORMAL 0
 #define STATE_IAC    1
@@ -55,296 +60,219 @@ MEMB(linemem, struct telnetd_line, TELNETD_CONF_NUMLINES);
 #define STATE_DONT   5
 #define STATE_CLOSE  6
 
-static struct telnetd_state s;
+//static struct telnetd_state s;
 
 #define TELNET_IAC   255
 #define TELNET_WILL  251
 #define TELNET_WONT  252
 #define TELNET_DO    253
 #define TELNET_DONT  254
-/*---------------------------------------------------------------------------*/
-static char *
-alloc_line(void)
-{
-  return memb_alloc(&linemem);
-}
-/*---------------------------------------------------------------------------*/
-static void
-dealloc_line(char *line)
-{
-  memb_free(&linemem, line);
-}
-/*---------------------------------------------------------------------------*/
-void
-shell_quit(char *str)
-{
-  s.state = STATE_CLOSE;
-}
-/*---------------------------------------------------------------------------*/
-static void
-sendline(char *line)
-{
-  static unsigned int i;
-  
-  for(i = 0; i < TELNETD_CONF_NUMLINES; ++i) {
-    if(s.lines[i] == NULL) {
-      s.lines[i] = line;
-      break;
-    }
-  }
-  if(i == TELNETD_CONF_NUMLINES) {
-    dealloc_line(line);
-  }
-}
-/*---------------------------------------------------------------------------*/
-void
-shell_prompt(char *str)
-{
-  char *line;
-  line = alloc_line();
-  if(line != NULL) {
-    strncpy(line, str, TELNETD_CONF_LINELEN);
-    /*    petsciiconv_toascii(line, TELNETD_CONF_LINELEN);*/
-    sendline(line);
-  }
-}
-/*---------------------------------------------------------------------------*/
-void
-shell_output(char *str1, char *str2)
-{
-  static unsigned len;
-  char *line;
 
-  line = alloc_line();
-  if(line != NULL) {
-    len = strlen(str1);
-    strncpy(line, str1, TELNETD_CONF_LINELEN);
-    if(len < TELNETD_CONF_LINELEN) {
-      strncpy(line + len, str2, TELNETD_CONF_LINELEN - len);
-    }
-    len = strlen(line);
-    if(len < TELNETD_CONF_LINELEN - 2) {
-      line[len] = ISO_cr;
-      line[len+1] = ISO_nl;
-      line[len+2] = 0;
-    }
-    /*    petsciiconv_toascii(line, TELNETD_CONF_LINELEN);*/
-    sendline(line);
-  }
+xQueueHandle rx_queue;
+
+struct rx_item 
+{
+    struct socket_state *ss;
+    void    *data;
+    int      data_len;
+};
+
+/*---------------------------------------------------------------------------*/
+void shell_quit(struct socket_state *ss, char *str)
+{
+//  s.state = STATE_CLOSE;
 }
 /*---------------------------------------------------------------------------*/
-void
-telnetd_init(void)
+static void sendline(struct socket_state *ss, char *line)
 {
-  uip_listen(HTONS(23));
-  memb_init(&linemem);
-  shell_init();
+//    lcd_puts("send line %d %d", strlen(line), line[1]);
+    sock_write(ss, line, strlen(line));
 }
 /*---------------------------------------------------------------------------*/
-static void
-acked(void)
+static void get_char(struct socket_state *ss, u8_t c)
 {
-  static unsigned int i;
+    struct telnetd_state *s = ss->user_state;
+
+    if(c == ISO_cr) {
+	return;
+    }
   
-  while(s.numsent > 0) {
-    dealloc_line(s.lines[0]);
-    for(i = 1; i < TELNETD_CONF_NUMLINES; ++i) {
-      s.lines[i - 1] = s.lines[i];
-    }
-    s.lines[TELNETD_CONF_NUMLINES - 1] = NULL;
-    --s.numsent;
-  }
-}
-/*---------------------------------------------------------------------------*/
-static void
-senddata(void)
-{
-  static char *bufptr, *lineptr;
-  static int buflen, linelen;
-  
-  bufptr = uip_appdata;
-  buflen = 0;
-  for(s.numsent = 0; s.numsent < TELNETD_CONF_NUMLINES &&
-	s.lines[s.numsent] != NULL ; ++s.numsent) {
-    lineptr = s.lines[s.numsent];
-    linelen = strlen(lineptr);
-    if(linelen > TELNETD_CONF_LINELEN) {
-      linelen = TELNETD_CONF_LINELEN;
-    }
-    if(buflen + linelen < uip_mss()) {
-      memcpy(bufptr, lineptr, linelen);
-      bufptr += linelen;
-      buflen += linelen;
+    s->buf[(int)s->bufptr] = c;
+    if(s->buf[(int)s->bufptr] == ISO_nl ||
+       s->bufptr == sizeof(s->buf) - 1) {
+	if(s->bufptr > 0) {
+	    s->buf[(int)s->bufptr] = 0;
+	    /*      petsciiconv_topetscii(s.buf, TELNETD_CONF_LINELEN);*/
+	}
+	shell_input(ss, s->buf);
+	s->bufptr = 0;
     } else {
-      break;
+	++s->bufptr;
     }
-  }
-  uip_send(uip_appdata, buflen);
 }
 /*---------------------------------------------------------------------------*/
-static void
-closed(void)
+static void sendopt(struct socket_state *ss, u8_t option, u8_t value)
 {
-  static unsigned int i;
-  
-  for(i = 0; i < TELNETD_CONF_NUMLINES; ++i) {
-    if(s.lines[i] != NULL) {
-      dealloc_line(s.lines[i]);
-    }
-  }
-}
-/*---------------------------------------------------------------------------*/
-static void
-get_char(u8_t c)
-{
-  if(c == ISO_cr) {
-    return;
-  }
-  
-  s.buf[(int)s.bufptr] = c;
-  if(s.buf[(int)s.bufptr] == ISO_nl ||
-     s.bufptr == sizeof(s.buf) - 1) {
-    if(s.bufptr > 0) {
-      s.buf[(int)s.bufptr] = 0;
-      /*      petsciiconv_topetscii(s.buf, TELNETD_CONF_LINELEN);*/
-    }
-    shell_input(s.buf);
-    s.bufptr = 0;
-  } else {
-    ++s.bufptr;
-  }
-}
-/*---------------------------------------------------------------------------*/
-static void
-sendopt(u8_t option, u8_t value)
-{
-  char *line;
-  line = alloc_line();
-  if(line != NULL) {
+    char line[4];
     line[0] = TELNET_IAC;
     line[1] = option;
     line[2] = value;
     line[3] = 0;
-    sendline(line);
-  }
+    sendline(ss, line);
 }
 /*---------------------------------------------------------------------------*/
-static void
-newdata(void)
+void shell_prompt(struct socket_state *ss, char *str)
 {
-  u16_t len;
-  u8_t c;
-  char *dataptr;
-    
+    sendline(ss, str);
+}
+/*---------------------------------------------------------------------------*/
+void shell_output(struct socket_state *ss, char *str1, char *str2)
+{
+    char nl[3] = {ISO_cr, ISO_nl, 0};
+    sendline(ss, str1);
+    if (strlen(str2))
+	sendline(ss, str2);
+    sendline(ss, nl);
+}
+
+void new_data(struct socket_state *ss, char *dataptr, uint16_t len)
+{
+    struct telnetd_state *s = ss->user_state;
+    u8_t c;
   
-  len = uip_datalen();
-  dataptr = (char *)uip_appdata;
-  
-  while(len > 0 && s.bufptr < sizeof(s.buf)) {
-    c = *dataptr;
-    ++dataptr;
-    --len;
-    switch(s.state) {
-    case STATE_IAC:
-      if(c == TELNET_IAC) {
-	get_char(c);
-	s.state = STATE_NORMAL;
-      } else {
-	switch(c) {
-	case TELNET_WILL:
-	  s.state = STATE_WILL;
-	  break;
-	case TELNET_WONT:
-	  s.state = STATE_WONT;
-	  break;
-	case TELNET_DO:
-	  s.state = STATE_DO;
-	  break;
-	case TELNET_DONT:
-	  s.state = STATE_DONT;
-	  break;
-	default:
-	  s.state = STATE_NORMAL;
-	  break;
-	}
-      }
-      break;
-    case STATE_WILL:
-      /* Reply with a DONT */
-      sendopt(TELNET_DONT, c);
-      s.state = STATE_NORMAL;
-      break;
+    if (dataptr == NULL)
+    {
+	shell_start(ss);
+	sock_flush(ss);
+	return;
+    }
+
+    while(len > 0 && s->bufptr < sizeof(s->buf)) {
+	c = *dataptr;
+	++dataptr;
+	--len;
+	switch(s->state) {
+	case STATE_IAC:
+	    if(c == TELNET_IAC) {
+		get_char(ss, c);
+		s->state = STATE_NORMAL;
+	    } else {
+		switch(c) {
+		case TELNET_WILL:
+		    s->state = STATE_WILL;
+		    break;
+		case TELNET_WONT:
+		    s->state = STATE_WONT;
+		    break;
+		case TELNET_DO:
+		    s->state = STATE_DO;
+		    break;
+		case TELNET_DONT:
+		    s->state = STATE_DONT;
+		    break;
+		default:
+		    s->state = STATE_NORMAL;
+		    break;
+		}
+	    }
+	    break;
+	case STATE_WILL:
+	    /* Reply with a DONT */
+	    sendopt(ss, TELNET_DONT, c);
+	    s->state = STATE_NORMAL;
+	    break;
       
-    case STATE_WONT:
-      /* Reply with a DONT */
-      sendopt(TELNET_DONT, c);
-      s.state = STATE_NORMAL;
-      break;
-    case STATE_DO:
-      /* Reply with a WONT */
-      sendopt(TELNET_WONT, c);
-      s.state = STATE_NORMAL;
-      break;
-    case STATE_DONT:
-      /* Reply with a WONT */
-      sendopt(TELNET_WONT, c);
-      s.state = STATE_NORMAL;
-      break;
-    case STATE_NORMAL:
-      if(c == TELNET_IAC) {
-	s.state = STATE_IAC;
-      } else {
-	get_char(c);
-      }
-      break;
-    }
-
-    
-  }
-  
+	case STATE_WONT:
+	    /* Reply with a DONT */
+	    sendopt(ss, TELNET_DONT, c);
+	    s->state = STATE_NORMAL;
+	    break;
+	case STATE_DO:
+	    /* Reply with a WONT */
+	    sendopt(ss, TELNET_WONT, c);
+	    s->state = STATE_NORMAL;
+	    break;
+	case STATE_DONT:
+	    /* Reply with a WONT */
+	    sendopt(ss, TELNET_WONT, c);
+	    s->state = STATE_NORMAL;
+	    break;
+	case STATE_NORMAL:
+	    if(c == TELNET_IAC) {
+		s->state = STATE_IAC;
+	    } else {
+		get_char(ss, c);
+	    }
+	    break;
+	} 
+    }    
+    sock_flush(ss);
 }
+
 /*---------------------------------------------------------------------------*/
-void
-telnetd_appcall(void)
+static void telnet_mainloop(void *pvParameters )
 {
-  static unsigned int i;
-  if(uip_connected()) {
-    /*    tcp_markconn(uip_conn, &s);*/
-    for(i = 0; i < TELNETD_CONF_NUMLINES; ++i) {
-      s.lines[i] = NULL;
+    while (1)
+    {
+	struct rx_item item;
+	if (xQueueReceive( rx_queue, &item, 10000 ) == pdTRUE)
+	{
+	    debugf("RX %d\n", item.data_len);
+	    new_data(item.ss, item.data, item.data_len);
+	    if (item.data) free(item.data);
+	}
     }
-    s.bufptr = 0;
-    s.state = STATE_NORMAL;
-
-    shell_start();
-  }
-
-  if(s.state == STATE_CLOSE) {
-    s.state = STATE_NORMAL;
-    uip_close();
-    return;
-  }
-  
-  if(uip_closed() ||
-     uip_aborted() ||
-     uip_timedout()) {
-    closed();
-  }
-  
-  if(uip_acked()) {
-    acked();
-  }
-  
-  if(uip_newdata()) {
-    newdata();
-  }
-  
-  if(uip_rexmit() ||
-     uip_newdata() ||
-     uip_acked() ||
-     uip_connected() ||
-     uip_poll()) {
-    senddata();
-  }
 }
+
 /*---------------------------------------------------------------------------*/
+void telnetd_init(void)
+{
+    uip_listen(HTONS(23));
+    shell_init();
+
+    rx_queue = xQueueCreate(10,  sizeof(struct rx_item));
+    xTaskCreate( telnet_mainloop,
+		 (const signed char *)"telnetd",
+		 configMINIMAL_STACK_SIZE + 4096,
+		 NULL,
+		 1,
+		 NULL );
+
+}
+
+static void telnet_send_message(struct socket_state *ss, const void *data, int len)
+{
+    struct rx_item item;
+    item.ss             = ss;
+    item.data           = data;
+    item.data_len       = len;
+    if (pdTRUE != xQueueSend( rx_queue, &item, 200))
+    {
+	serial_puts("Overflow telnet");
+    }
+    debugf("telnet %d\r\n", len);
+}
+
+/*---------------------------------------------------------------------------*/
+
+void telnetd_recv_callback(struct socket_state *ss)
+{
+    void *data = malloc(uip_datalen());
+    memcpy(data, uip_appdata, uip_datalen());
+    telnet_send_message(ss, data, uip_datalen());
+}
+
+/*---------------------------------------------------------------------------*/
+
+void telnetd_new_connection(struct socket_state *ss)
+{
+    struct telnetd_state *s = malloc(sizeof(struct telnetd_state));
+    s->bufptr = 0;
+    s->state = STATE_NORMAL;
+
+    ss->recv_callback = telnetd_recv_callback;
+    ss->user_state    = s;
+
+    // let other thread know of new connection
+    telnet_send_message(ss, NULL, 0);
+}

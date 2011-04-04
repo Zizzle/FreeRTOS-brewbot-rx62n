@@ -68,6 +68,9 @@
 #include "r_ether.h"
 #include "network-apps/telnetd.h"
 #include "network-apps/ftpd.h"
+#include "network-apps/socket_io.h"
+
+#include "lcd.h"
 
 /*-----------------------------------------------------------*/
 
@@ -96,7 +99,7 @@ clock_time_t clock_time( void );
 /*-----------------------------------------------------------*/
 
 /* The semaphore used by the ISR to wake the uIP task. */
-xSemaphoreHandle xEMACSemaphore = NULL;
+xQueueHandle xEMACQueue = NULL;
 
 /*-----------------------------------------------------------*/
 
@@ -139,8 +142,8 @@ struct timer periodic_timer, arp_timer;
 	ftpd_init();
 	ftpd_init_data();
 
-	/* Create the semaphore used to wake the uIP task. */
-	vSemaphoreCreateBinary( xEMACSemaphore );
+	/* Create the queue used to wake the uIP task. */
+	xEMACQueue = xQueueCreate(10,  sizeof(struct uIP_message));
 
 	/* Initialise the MAC. */
 	vInitEmac();
@@ -156,6 +159,8 @@ struct timer periodic_timer, arp_timer;
 		
 		/* Is there received data ready to be processed? */
 		uip_len = ( unsigned short ) ulEMACRead();
+
+//		printf("EMACS %d", uip_len);
 		
 		if( ( uip_len > 0 ) && ( uip_buf != NULL ) )
 		{
@@ -170,6 +175,7 @@ struct timer periodic_timer, arp_timer;
 				uip_len is set to a value > 0. */
 				if( uip_len > 0 )
 				{
+				    printf("%ld tx %d\r\n", xTaskGetTickCount(), uip_len);
 					uip_arp_out();
 					vEMACWrite();
 				}
@@ -204,6 +210,7 @@ struct timer periodic_timer, arp_timer;
 				uip_len is set to a value > 0. */
 				if( uip_len > 0 )
 				{
+				    printf("%ld re tx %d\r\n", xTaskGetTickCount(), uip_len);
 					uip_arp_out();
 					vEMACWrite();
 				}
@@ -224,8 +231,24 @@ struct timer periodic_timer, arp_timer;
 			/* We did not receive a packet, and there was no periodic
 			processing to perform.  Block for a fixed period.  If a packet
 			is received during this period we will be woken by the ISR
-			giving us the Semaphore. */
-			xSemaphoreTake( xEMACSemaphore, configTICK_RATE_HZ / 20 );
+			giving us a message, or a task wanting to send data. */
+
+		    struct uIP_message item;
+		    if (xQueueReceive( xEMACQueue, &item, configTICK_RATE_HZ / 20) == pdTRUE)
+		    {
+			if (item.uip_conn != NULL)
+			{
+			    printf("tx %d\n", item.uip_conn);
+			    uip_conn = item.uip_conn;
+			    uip_process(UIP_POLL_REQUEST);
+			    if( uip_len > 0 )
+			    {
+				printf("%ld ff tx %d\r\n", xTaskGetTickCount(), uip_len);
+				uip_arp_out();
+				vEMACWrite();
+			    }
+			}
+		    }
 		}
 	}
 }
@@ -296,7 +319,7 @@ void uip_tcp_appcall(void)
 	ftpd_appcall_data();
 	break;
     case HTONS(23):
-	telnetd_appcall();
+	socket_appcall();
 	break;
     case HTONS(80):
 	httpd_appcall();

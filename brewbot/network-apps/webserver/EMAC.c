@@ -217,8 +217,8 @@ long x;
 	/* Setup both descriptors to transmit the frame. */
 	xTxDescriptors[ 0 ].buf_p = ( char * ) uip_buf;
 	xTxDescriptors[ 0 ].bufsize = uip_len;	
-	xTxDescriptors[ 1 ].buf_p = ( char * ) uip_buf;
-	xTxDescriptors[ 1 ].bufsize = uip_len;
+//	xTxDescriptors[ 1 ].buf_p = ( char * ) uip_buf;
+//	xTxDescriptors[ 1 ].bufsize = uip_len;
 
 	/* uip_buf is being sent by the Tx descriptor.  Allocate a new buffer
 	for use by the stack. */
@@ -525,34 +525,35 @@ static void prvConfigureEtherCAndEDMAC( void )
 
 void vEMAC_ISR_Handler( void )
 {
-unsigned long ul = EDMAC.EESR.LONG;
-long lHigherPriorityTaskWoken = pdFALSE;
-extern xSemaphoreHandle xEMACSemaphore;
-static long ulTxEndInts = 0;
+    unsigned long ul = EDMAC.EESR.LONG;
+    long lHigherPriorityTaskWoken = pdFALSE;
+    extern xQueueHandle xEMACQueue;
+    static long ulTxEndInts = 0;
 
-	/* Re-enabled interrupts. */
-	__asm volatile( "SETPSW	I" );
+    /* Re-enabled interrupts. */
+    __asm volatile( "SETPSW	I" );
 
-	/* Has a Tx end occurred? */
-	if( ul & emacTX_END_INTERRUPT )
+    /* Has a Tx end occurred? */
+    if( ul & emacTX_END_INTERRUPT )
+    {
+	++ulTxEndInts;
+	if( ulTxEndInts >= 1 )
 	{
-		++ulTxEndInts;
-		if( ulTxEndInts >= 2 )
-		{
-			/* Only return the buffer to the pool once both Txes have completed. */
-			prvReturnBuffer( ( void * ) xTxDescriptors[ 0 ].buf_p );
-			ulTxEndInts = 0;
-		}
-		EDMAC.EESR.LONG = emacTX_END_INTERRUPT;
+	    /* Only return the buffer to the pool once both Txes have completed. */
+	    prvReturnBuffer( ( void * ) xTxDescriptors[ 0 ].buf_p );
+	    ulTxEndInts = 0;
 	}
+	EDMAC.EESR.LONG = emacTX_END_INTERRUPT;
+    }
 
-	/* Has an Rx end occurred? */
-	if( ul & emacRX_END_INTERRUPT )
-	{
-		/* Make sure the Ethernet task is not blocked waiting for a packet. */
-		xSemaphoreGiveFromISR( xEMACSemaphore, &lHigherPriorityTaskWoken );
-		portYIELD_FROM_ISR( lHigherPriorityTaskWoken );
-		EDMAC.EESR.LONG = emacRX_END_INTERRUPT;
-	}
+    /* Has an Rx end occurred? */
+    if( ul & emacRX_END_INTERRUPT )
+    {
+	/* Make sure the Ethernet task is not blocked waiting for a packet. */
+	struct uIP_message item = {NULL};
+	xQueueSendFromISR( xEMACQueue, &item, &lHigherPriorityTaskWoken );
+	portYIELD_FROM_ISR( lHigherPriorityTaskWoken );
+	EDMAC.EESR.LONG = emacRX_END_INTERRUPT;
+    }
 }
 

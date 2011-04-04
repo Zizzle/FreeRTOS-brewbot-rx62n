@@ -45,9 +45,11 @@ CFILES_ENET = \
 	brewbot/network-apps/telnetd.c \
 	brewbot/network-apps/shell.c \
 	brewbot/network-apps/shell_io.c \
+	brewbot/network-apps/socket_io.c \
 	brewbot/network-apps/uIP_Task.c \
 	brewbot/drivers/ds1820.c \
 	brewbot/drivers/spi.c \
+	brewbot/drivers/serial.c \
 	brewbot/drivers/audio.c \
 	brewbot/drivers/p5q.c \
 	brewbot/drivers/lcd.c \

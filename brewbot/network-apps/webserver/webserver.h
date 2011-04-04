@@ -40,8 +40,37 @@
 
 void uip_tcp_appcall(void);
 
+struct uIP_message
+{
+    struct uip_conn	*uip_conn;
+};
+
+enum SockStatus
+{
+    CLOSED,
+    OPEN
+};
+
+#define SOCKET_RECV_BUFF_SIZE 2048
+
+struct socket_state
+{
+    struct uip_conn	*uip_conn;
+    void                *semaphore;
+    int                  status;
+    unsigned char       *recv_buf;
+    int                  recv_count;
+    void               (*recv_callback)(struct socket_state *ss);
+    void                *user_state;
+
+    unsigned char       *tx_buf;
+    int                  tx_count;
+    char                 txing;
+};
+
 union _app_state
 {
+    struct socket_state  socket_state;
     struct telnetd_state telnetd_appstate;
     struct httpd_state   httpd_appstate;
 };

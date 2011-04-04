@@ -45,6 +45,8 @@
 #ifndef __SHELL_H__
 #define __SHELL_H__
 
+#include "webserver.h"
+
 /**
  * Initialize the shell.
  *
@@ -58,7 +60,7 @@ void shell_init(void);
  *
  * Called by the front-end when a new shell is started.
  */
-void shell_start(void);
+void shell_start(struct socket_state *ss);
 
 /**
  * Process a shell command.
@@ -69,13 +71,13 @@ void shell_start(void);
  *
  * \param command The command to be processed.
  */
-void shell_input(char *command);
+void shell_input(struct socket_state *ss, char *command);
 
 /**
  * Quit the shell.
  *
  */
-void shell_quit(char *);
+void shell_quit(struct socket_state *ss, char *);
 
 
 /**
@@ -88,7 +90,7 @@ void shell_quit(char *);
  * \param str1 The first half of the string to be output.
  * \param str2 The second half of the string to be output.
  */
-void shell_output(char *str1, char *str2);
+void shell_output(struct socket_state *ss, char *str1, char *str2);
 
 /**
  * Print a prompt to the shell window.
@@ -99,9 +101,9 @@ void shell_output(char *str1, char *str2);
  * \param prompt The prompt to be printed.
  *
  */
-void shell_prompt(char *prompt);
+void shell_prompt(struct socket_state *ss, char *prompt);
 
-void shell_printf(const char *fmt, ...);
+void shell_printf(struct socket_state *ss, const char *fmt, ...);
 
 
 #endif /* __SHELL_H__ */

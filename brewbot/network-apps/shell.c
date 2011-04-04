@@ -46,18 +46,22 @@
 #include "net/uip.h"
 #include "menu.h"
 #include "buttons.h"
+#include "socket_io.h"
+
+#include "FreeRTOS.h"
+#include "task.h"
 
 extern FATFS Fatfs;
 
 struct ptentry {
     char *commandstr;
-    void (* pfunc)(char *str);
+    void (* pfunc)(struct socket_state *ss, char *str);
     int num_args;
 };
 
 #define SHELL_PROMPT "brewbot> "
 
-void shell_printf(const char *fmt, ...)
+void shell_printf(struct socket_state *ss, const char *fmt, ...)
 {
     char message[38];
     va_list ap;
@@ -65,11 +69,11 @@ void shell_printf(const char *fmt, ...)
     vsnprintf(message, sizeof(message) - 1, fmt, ap);
     va_end(ap);
 
-    shell_output(message, "");
+    shell_output(ss, message, "");
 }
 
 /*---------------------------------------------------------------------------*/
-static void parse(register char *str, struct ptentry *t)
+static void parse(struct socket_state *ss, register char *str, struct ptentry *t)
 {
     struct ptentry *p;
     for(p = t; p->commandstr != NULL; ++p) {
@@ -87,37 +91,37 @@ static void parse(register char *str, struct ptentry *t)
 	}
 	else
 	{
-	    shell_printf("Need %d arguments", p->num_args);
+	    shell_printf(ss, "Need %d arguments", p->num_args);
 	}
     }
-    p->pfunc(str);
+    p->pfunc(ss, str);
 }
 /*---------------------------------------------------------------------------*/
-static void help(char *str)
+static void help(struct socket_state *ss, char *str)
 {
-    shell_output("Available commands:", "");
-    shell_output("stats   - show network statistics", "");
-    shell_output("conn    - show TCP connections", "");
-    shell_output("help, ? - show help", "");
-    shell_output("exit    - exit shell", "");
+    shell_output(ss, "Available commands:", "");
+    shell_output(ss, "stats   - show network statistics", "");
+    shell_output(ss, "conn    - show TCP connections", "");
+    shell_output(ss, "help, ? - show help", "");
+    shell_output(ss, "exit    - exit shell", "");
 }
 /*---------------------------------------------------------------------------*/
-static void unknown(char *str)
+static void unknown(struct socket_state *ss, char *str)
 {
     if(strlen(str) > 0) {
-	shell_output("Unknown command: ", str);
+	shell_output(ss, "Unknown command: ", str);
     }
 }
 
-static void mkfs(char *str)
+static void mkfs(struct socket_state *ss, char *str)
 {
     FRESULT result  = f_mkfs (0, 1, 1024);
     char message[20];
     sprintf(message,"result %d", result);
-    shell_output(message, "");
+    shell_output(ss, message, "");
 }
 
-static void ls(char * str)
+static void ls(struct socket_state *ss, char * str)
 {
     DIR dir;
     FILINFO fno;
@@ -135,7 +139,7 @@ static void ls(char * str)
     FRESULT result = f_opendir (&dir, "");
     if (result != FR_OK)
     {
-	shell_printf("Opendir failed %x", result);
+	shell_printf(ss, "Opendir failed %x", result);
 	return;
     }
 
@@ -148,14 +152,14 @@ static void ls(char * str)
 #else
 	fn = fno.fname;
 #endif
-	shell_printf("%s%s", fn, (fno.fattrib & AM_DIR) ? "/" : "");
+	shell_printf(ss, "%s%s", fn, (fno.fattrib & AM_DIR) ? "/" : "");
     }
 
     /* Get volume information and free clusters of drive 1 */
     result = f_getfree("0:", &fre_clust, &fs);
     if (result)
     {
-	shell_printf("getfree failed %x", result);
+	shell_printf(ss, "getfree failed %x", result);
 	return;
     }
 
@@ -164,48 +168,49 @@ static void ls(char * str)
     fre_sect = fre_clust * fs->csize;
 
     /* Print free space in unit of KB (assuming 512 bytes/sector) */
-    shell_printf("%lu KB total.\n"
+    shell_printf(ss,
+		 "%lu KB total.\n"
 		 "%lu KB available.\n",
 		 tot_sect / 2, fre_sect / 2);
 
 }
 
-static void mkdir(char * str)
+static void mkdir(struct socket_state *ss, char * str)
 {
     FRESULT result  = f_mkdir(str);
     if (result != FR_OK)
     {
-	shell_printf("mkdir failed %x", result);
+	shell_printf(ss, "mkdir failed %x", result);
     }
 }
 
-static void cd(char *str)
+static void cd(struct socket_state *ss, char *str)
 {
     FRESULT result = f_chdir(str);
 
-    shell_printf("change to %s", str);
+    shell_printf(ss, "change to %s", str);
 
     if (result != FR_OK)
     {
-	shell_printf("chdir failed %x", result);
+	shell_printf(ss, "chdir failed %x", result);
     }    
 }
 
 char buffer[80];
 
-static void pwd(char *str)
+static void pwd(struct socket_state *ss, char *str)
 {
     FRESULT result  = f_getcwd(buffer, sizeof(buffer));
     if (result != FR_OK)
     {
-	shell_printf("pwd failed %x", result);
+	shell_printf(ss, "pwd failed %x", result);
 	return;
     }
-    shell_printf("%s", buffer);
+    shell_printf(ss, "%s", buffer);
 }
 
 
-static void cat(char *str)
+static void cat(struct socket_state *ss, char *str)
 {
     FIL File1;
     FRESULT result;
@@ -228,7 +233,7 @@ static void cat(char *str)
     result = f_open(&File1, name, flags);
     if (result != FR_OK)
     {
-	shell_printf("Open failed %x", result);
+	shell_printf(ss, "Open failed %x", result);
 	return;	
     }
     
@@ -237,7 +242,7 @@ static void cat(char *str)
 	result = f_lseek(&File1, File1.fsize);
 	if (result != FR_OK)
 	{
-	    shell_printf("Seek failed %x", result);
+	    shell_printf(ss, "Seek failed %x", result);
 	    f_close(&File1);
 	    return;
 	}
@@ -251,78 +256,84 @@ static void cat(char *str)
     {
 	while (f_gets (buffer, sizeof(buffer), &File1) != NULL)
 	{
-	    shell_printf("%s\n", buffer);
+	    sock_write(ss, buffer, strlen(buffer));
 	}
     }
 
     f_close(&File1);    
 }
 
-static void settings(char *str)
+static void settings(struct socket_state *ss, char *str)
 {
     settings_shell_display();
 }
 
-static void settings_set(char *str)
+static void settings_set(struct socket_state *ss, char *str)
 {
     char *second = strchr(str, ' ');
     if (second == NULL)
     {
-	shell_printf("Need 2 arguments");
+	shell_printf(ss, "Need 2 arguments");
 	return;
     }
 
     *second = 0; // terminate the first argument
-    shell_printf("%s", settings_update(str, second + 1));
+    shell_printf(ss, "%s", settings_update(str, second + 1));
 }
 
-static void beep(char *str)
+static void beep(struct socket_state *ss, char *str)
 {
     audio_beep(atoi(str), 300);
 }
 
-static void ps(char *str)
+static void ps(struct socket_state *ss, char *str)
 {
     extern void vTaskList( signed char *pcWriteBuffer );
     extern char *pcGetTaskStatusMessage( void );
     vTaskList( uip_appdata );
     uip_send(uip_appdata, strlen(uip_appdata));
-    shell_printf("");
+    shell_printf(ss, "");
 }
 
-static void up(char *str)
+static void up(struct socket_state *ss, char *str)
 {
     menu_key(KEY_UP & KEY_PRESSED);
     menu_key(KEY_UP);
 }
-static void left(char *str)
+static void left(struct socket_state *ss, char *str)
 {
     menu_key(KEY_LEFT & KEY_PRESSED);
     menu_key(KEY_LEFT);
 }
-static void right(char *str)
+static void right(struct socket_state *ss, char *str)
 {
     menu_key(KEY_RIGHT & KEY_PRESSED);
     menu_key(KEY_RIGHT);
 }
-static void down(char *str)
+static void down(struct socket_state *ss, char *str)
 {
     menu_key(KEY_DOWN & KEY_PRESSED);
 //    menu_key(KEY_DOWN);
 }
 
-static void rm(char *str)
+static void rm(struct socket_state *ss, char *str)
 {
     FRESULT result = f_unlink(str);
     if (result != FR_OK)
     {
-	shell_printf("Failed %d", result);
+	shell_printf(ss, "Failed %d", result);
     }
 }
 
-static void python(char *str)
+static void python(struct socket_state *ss, char *str)
 {
+    xTaskSetStdio(NULL, 0, ss);
+    xTaskSetStdio(NULL, 1, ss);
+    xTaskSetStdio(NULL, 2, ss);
     py_main();
+    xTaskSetStdio(NULL, 0, NULL);
+    xTaskSetStdio(NULL, 1, NULL);
+    xTaskSetStdio(NULL, 2, NULL);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -356,16 +367,16 @@ void shell_init(void)
 {
 }
 /*---------------------------------------------------------------------------*/
-void shell_start(void)
+void shell_start(struct socket_state *ss)
 {
-    shell_output("uIP command shell", "");
-    shell_output("Type '?' and return for help", "");
-    shell_prompt(SHELL_PROMPT);
+    shell_output(ss, "uIP command shell", "");
+    shell_output(ss, "Type '?' and return for help", "");
+    shell_prompt(ss, SHELL_PROMPT);
 }
 /*---------------------------------------------------------------------------*/
-void shell_input(char *cmd)
+void shell_input(struct socket_state *ss, char *cmd)
 {
-    parse(cmd, parsetab);
-    shell_prompt(SHELL_PROMPT);
+    parse(ss, cmd, parsetab);
+    shell_prompt(ss, SHELL_PROMPT);
 }
 /*---------------------------------------------------------------------------*/

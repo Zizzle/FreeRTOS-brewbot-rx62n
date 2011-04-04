@@ -13,10 +13,14 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+//#include <sys/time.h>
 
-static int fds = 10;
-#include "shell.h"
+#include "FreeRTOS.h"
+#include "task.h"
+
+#include "socket_io.h"
 #include "fatfs/ff.h"
+#include "serial.h"
 
 static FIL File1;
 static char File1Name[100];
@@ -28,21 +32,21 @@ int open(const char *pathname, int flags)
     result = f_open(&File1, pathname, flags);
     if (result != FR_OK)
     {
-	shell_printf("Open failed %x - %s", result, pathname);
+	printf("Open failed %x - %s", result, pathname);
 	return -1;	
     }    
 
     strncpy(File1Name, pathname, 100);
-    shell_printf("open %s", pathname);
+    printf("open %s", pathname);
     return (int)&File1;
 }
 
 ssize_t read(int fd, void *buf, size_t count)
 {
     UINT nread = 0;
-    shell_printf("read %d len %d", fd, count);
+    printf("read %d len %ld", fd, count);
     f_read(&File1, buf, count, &nread); 
-    shell_printf("n %d", nread);
+    printf("n %u", nread);
     return nread;
 }
 
@@ -50,9 +54,17 @@ ssize_t read(int fd, void *buf, size_t count)
 int
 write (int __fd, const void *__buf, size_t __nbyte )
 {
-    ((char *)__buf)[__nbyte] = 0;
-    shell_printf("%s", __buf);
-    return __nbyte;
+    struct socket_state *ss = xTaskGetStdio(NULL, __fd);
+    if (ss != NULL)
+    {
+	return sock_write(ss, __buf, __nbyte);
+    }
+    else
+    {
+	serial_write((const char *)__buf, __nbyte);
+	return __nbyte;
+    }
+    return -1;
 }
 
 
@@ -69,7 +81,7 @@ int fstat(int fd, struct stat *buf)
 	return -1;
     }
 
-    shell_printf("stat %d", fd);
+    printf("stat %d", fd);
     buf->st_dev = 0;     /* ID of device containing file */
     buf->st_ino = 1;     /* inode number */
     buf->st_mode  = S_IFREG | S_IRUSR | S_IWUSR;    /* protection */
@@ -89,7 +101,7 @@ int fstat(int fd, struct stat *buf)
 
 off_t lseek(int fd, off_t offset, int whence)
 {
-    shell_printf("lseek %d", fd);
+    printf("lseek %d", fd);
     return 0;
 }
 
@@ -101,30 +113,39 @@ int isatty(int fd)
 int unlink(const char *pathname)
 {
     fprintf(stderr, "unlink\n");
+    return -1;
 }
 
-clock_t times(struct tms *buf)
-{
-    fprintf(stderr, "times\n");
-}
 
 int link(const char *oldpath, const char *newpath)
 {
     fprintf(stderr, "link\n");
+    return -1;
+}
+#if 0
+
+clock_t times(struct tms *buf)
+{
+    fprintf(stderr, "times\n");
+    return -1;
 }
 
 int kill(pid_t pid, int sig)
 {
     fprintf(stderr, "kill\n");
+    return -1;
 }
 
 int gettimeofday(struct timeval *tv, struct timezone *tz)
 {
     fprintf(stderr, "gettimeofday\n");
+    return -1;
 }
 
 pid_t getpid(void)
 {
     fprintf(stderr, "getpid\n");
+    return -1;
 }
 
+#endif

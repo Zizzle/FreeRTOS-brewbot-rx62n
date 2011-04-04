@@ -205,7 +205,7 @@ void settings_shell_display()
 	{
 	    sprintf(update_message, disp->fmt, *((uint8_t *)disp->value));
 	}
-	shell_printf("%s\t%s", disp->name, update_message);
+	printf("%s\t%s", disp->name, update_message);
     }
 }
 

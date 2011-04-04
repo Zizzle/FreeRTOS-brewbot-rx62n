@@ -114,6 +114,8 @@ typedef struct tskTaskControlBlock
 		unsigned long ulRunTimeCounter;		/*< Used for calculating how much CPU time each task is utilising. */
 	#endif
 
+    void *stdio[3];
+
 } tskTCB;
 
 
@@ -1936,6 +1938,9 @@ static void prvInitialiseTCBVariables( tskTCB *pxTCB, const signed char * const 
 		( void ) usStackDepth;
 	}
 	#endif
+	pxTCB->stdio[0] = NULL;
+	pxTCB->stdio[1] = NULL;
+	pxTCB->stdio[2] = NULL;
 }
 /*-----------------------------------------------------------*/
 
@@ -2340,7 +2345,20 @@ void vTaskExitCritical( void )
 
 #endif
 /*-----------------------------------------------------------*/
+void *xTaskGetStdio( xTaskHandle xTask,  int fd)
+{
+    if (fd < 0 || fd > 2)
+	return NULL;
+    return prvGetTCBFromHandle(xTask)->stdio[fd];
+}
 
+/*-----------------------------------------------------------*/
+void xTaskSetStdio( xTaskHandle xTask,  int fd, void *stdio)
+{
+    if (fd < 0 || fd > 2)
+	return;
+    prvGetTCBFromHandle(xTask)->stdio[fd] = stdio;
+}
 
 
 

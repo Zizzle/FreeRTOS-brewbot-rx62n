@@ -43,7 +43,7 @@ int recipe_load(const char *name, recipe_t *rec)
     result = f_open(&file, line, FA_READ);
     if (result != FR_OK)
     {
-	shell_printf("%s", line);
+	printf("%s", line);
 	return 0;	
     }
 

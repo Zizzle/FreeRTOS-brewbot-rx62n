@@ -15,6 +15,7 @@
 #include "hop_droppers.h"
 #include "heat.h"
 #include "p5q.h"
+#include "serial.h"
 
 /* Priorities at which the tasks are created. */
 #define mainCHECK_TASK_PRIORITY		( configMAX_PRIORITIES - 1 )
@@ -89,6 +90,8 @@ struct menu main_menu[] =
 
 FATFS Fatfs;
 
+#include <stdio.h>
+
 /*-----------------------------------------------------------*/
 
 int main(void)
@@ -101,9 +104,13 @@ int main(void)
        here. */
     HardwareSetup();
 
+    serial_open();
     spi_open();
     lcd_open();
     flash_open();
+
+    serial_puts("Brewbot boot.\r\n");
+//    setbuf(stdout, NULL);
 
     mount_result  = f_mount (0, &Fatfs);
 
@@ -170,6 +177,7 @@ void vApplicationSetupTimerInterrupt( void )
 of this file. */
 void vApplicationMallocFailedHook( void )
 {
+    serial_puts("Malloc failed\r\n");
     lcd_text(0,0, "Malloc failed");
     for( ;; );
 }
@@ -179,6 +187,7 @@ void vApplicationMallocFailedHook( void )
 of this file. */
 void vApplicationStackOverflowHook( xTaskHandle *pxTask, signed char *pcTaskName )
 {
+    serial_puts("Stack Overflow\r\n");
     lcd_text(0,0, "Stack Overflow");
     for( ;; );
 }
