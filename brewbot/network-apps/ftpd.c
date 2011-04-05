@@ -581,13 +581,12 @@ static void generate_file_list()
     FILINFO fno;
     char *fn;
     FRESULT result;
+
 #if _USE_LFN
     static char lfn[_MAX_LFN + 1];
     fno.lfname = lfn;
     fno.lfsize = sizeof(lfn);
 #endif
-
-    debugf("list dir\r\n");
 
     result = f_opendir (&dir, "");
 
@@ -601,8 +600,6 @@ static void generate_file_list()
 
     for (;;)
     {
-	char line[50];
-	int line_len;
 
 	result = f_readdir(&dir, &fno);
 	if (result != FR_OK || fno.fname[0] == 0) break;
@@ -613,29 +610,18 @@ static void generate_file_list()
 	fn = fno.fname;
 #endif
 
-	if (fno.fattrib & AM_DIR)
-	{
-	    line_len = sprintf(line,"drw-r--r--  1 0 0 %6lu Jan 1 2007 %s\r\n", (unsigned long)0, fn);
-	}
-	else
-	{
-	    line_len = sprintf(line,"-rw-r--r--  1 0 0 %6lu Jan 1 2007 %s\r\n", (unsigned long)fno.fsize, fn);
-	}
-
-	if (uip_len + line_len < uip_mss())
-	{
-	    strcat((char*)uip_appdata + uip_len, line);
-	    uip_len += line_len;
-	}
+	uip_len += snprintf(uip_appdata + uip_len, uip_mss() - uip_len,
+			    "%crw-r--r--  1 0 0 %6lu Jan 1 2007 %s\r\n",
+			    (fno.fattrib & AM_DIR) ? 'd' : '-',
+			    (unsigned long)fno.fsize, fn);
     }
-
+	
     if (uip_len == 0)
     {
 	struct ftpd_state *ftps = (struct ftpd_state *)(&uip_conn->appstate);
 	uip_close();
 	ftps->Status = FTPDSTS_SENT_FTPDATA;
 	exchgParams.Status = ftps->Status;
-	debugf("sending poll\r\n");
 	uIP_request_poll(exchgParams.master_con);
     }
 }
@@ -721,9 +707,6 @@ static void _retrasmit_data(void)
 static void _poll_data(void)
 {
     struct ftpd_state *ftps = (struct ftpd_state *)(&uip_conn->appstate);
-
-    debugf("poll\r\n");
-
     if (ftps->Status == FTPDSTS_NONE) {
 	if (exchgParams.Status == FTPDSTS_PREP_FTPDATA) {
 	    ftps->Status = exchgParams.Status;
@@ -765,10 +748,6 @@ static void _newdata_data(void)
 	    ftps->RecvCmd = exchgParams.RecvCmd;
 	}
     }
-
-
-    debugf("new data %d status %d\r\n", uip_len, ftps->Status);
-
 
     UINT written;
     switch (ftps->Status) {
@@ -819,10 +798,9 @@ static void _ack_data(void)
 
 static void _senddata_data(void)
 {
-//	struct arnftpd_state *ftps = (struct arnftpd_state *)(uip_conn->appstate);
-    if (uip_len > 0) {
+    if (uip_len > 0)
+    {
 	uip_send(uip_appdata,uip_len);
-	//PRINT("Senddata_Handler:\n");
     }
 }
 
@@ -836,7 +814,6 @@ void ftpd_appcall_data(void)
 	_timeout_data();
     }
     if(uip_connected()) {
-	debugf("connected\r\n");
 	_connect_data();
     }
     if(uip_acked()) {

@@ -234,6 +234,7 @@ struct timer periodic_timer, arp_timer;
 		    {
 			if (item.uip_conn != NULL)
 			{
+			    uip_len = 0;
 			    uip_conn = item.uip_conn;
 			    uip_process(UIP_POLL_REQUEST);
 			    if( uip_len > 0 )
