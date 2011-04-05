@@ -215,8 +215,6 @@ void ftpd_init_data(void)
 
 void ftpd_appcall(void)
 {
-    debugf("AAA FTPD %x %x\r\n", uip_conn, uip_flags);
-
     if(uip_aborted()) {
 	_abort();
     }
@@ -248,7 +246,6 @@ void ftpd_appcall(void)
        uip_poll()) {
 	_senddata();
     }
-    if (uip_len > 0) debugf("sending\r\n"); serial_write(uip_appdata, uip_len > 10 ? 10 : uip_len);
 }
 
 static void _abort(void)
@@ -439,7 +436,6 @@ static void _poll(void)
     struct ftpd_state *ftps = (struct ftpd_state *)(&uip_conn->appstate);
     if (ftps->IsCmdWD )
     {
-	debugf("poll status=%d AnsToCmd=%d\r\n",  ftps->Status, ftps->AnsToCmd);
 	if (ftps->Status == FTPDSTS_SENT_FTPDATA)
 	{
 	    switch (ftps->AnsToCmd) {
@@ -609,9 +605,6 @@ static void generate_file_list(char *path)
     fno.lfname = lfn;
     fno.lfsize = sizeof(lfn);
 #endif
-
-    debugf("list dir %s\r\n", path);
-
     result = f_opendir (&dir, path);
     if (result != FR_OK)
     {
@@ -644,8 +637,6 @@ static void generate_file_list(char *path)
 static void _poll_data(void)
 {
     struct ftpd_state *ftps = (struct ftpd_state *)(&uip_conn->appstate);
-
-    debugf("poll %d %d\r\n", ftps->Status, ftps->RecvCmd);
 
     switch (ftps->Status) {
     case FTPDSTS_PREP_FTPDATA:
@@ -772,8 +763,6 @@ static void _close_data(void)
 
 void ftpd_appcall_data(void)
 {
-    struct ftpd_state *ftps = (struct ftpd_state *)(&uip_conn->appstate);
-    debugf("FTPD %x %x  status %d rec %d\r\n", uip_conn, uip_flags, ftps->Status, ftps->RecvCmd);
     if(uip_aborted()) {
 	_abort_data();
     }
@@ -805,6 +794,4 @@ void ftpd_appcall_data(void)
     if(uip_closed()) {
 	_close_data();
     }
-
-    if (uip_len > 0) debugf("sending\r\n"); serial_write(uip_appdata, uip_len > 10 ? 10 : uip_len);
 }
