@@ -51,6 +51,8 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
+#include "pm.h"
+
 extern FATFS Fatfs;
 
 struct ptentry {
@@ -106,10 +108,62 @@ static void help(struct socket_state *ss, char *str)
     shell_output(ss, "exit    - exit shell", "");
 }
 /*---------------------------------------------------------------------------*/
+static int py_file(const char *str)
+{
+    FIL File1;
+    FRESULT result;
+    char name[20];
+    UINT nread;
+    void *img = NULL;
+
+    snprintf(name, sizeof(name), "/bin/%s.pyc", str);
+    result = f_open(&File1, name, FA_READ);
+    if (result != FR_OK)
+    {
+	return -1;	
+    }
+
+    img = malloc(File1.fsize);
+    if (img == NULL)
+    {
+	printf("Failed to alloc ram for IMG\r\n");
+	return 0;
+    }
+
+    result = f_read(&File1, img, File1.fsize, &nread);
+    f_close(&File1);    
+
+    if (result == FR_OK)
+    {
+	PmReturn_t retval;
+	retval = pm_init(MEMSPACE_PROG, img);
+	if (retval)printf("init retval %d\r\n", retval);
+	PM_RETURN_IF_ERROR(retval);
+	retval = pm_run((uint8_t *)str);
+	if (retval)printf("run retval %d\r\n", retval);
+    }
+    else
+    {
+	printf("read failed %d\r\n", result);
+    }
+
+    free(img);
+    return 0;
+}
+
+/*---------------------------------------------------------------------------*/
 static void unknown(struct socket_state *ss, char *str)
 {
-    if(strlen(str) > 0) {
-	shell_output(ss, "Unknown command: ", str);
+    if(strlen(str) > 0)
+    {
+	xTaskSetStdio(NULL, 0, ss);
+	xTaskSetStdio(NULL, 1, ss);
+	xTaskSetStdio(NULL, 2, ss);
+	if (py_file(str) != 0)
+	    shell_output(ss, "Unknown command: ", str);
+	xTaskSetStdio(NULL, 0, NULL);
+	xTaskSetStdio(NULL, 1, NULL);
+	xTaskSetStdio(NULL, 2, NULL);
     }
 }
 
@@ -325,17 +379,6 @@ static void rm(struct socket_state *ss, char *str)
     }
 }
 
-static void python(struct socket_state *ss, char *str)
-{
-    xTaskSetStdio(NULL, 0, ss);
-    xTaskSetStdio(NULL, 1, ss);
-    xTaskSetStdio(NULL, 2, ss);
-    py_main();
-    xTaskSetStdio(NULL, 0, NULL);
-    xTaskSetStdio(NULL, 1, NULL);
-    xTaskSetStdio(NULL, 2, NULL);
-}
-
 /*---------------------------------------------------------------------------*/
 static struct ptentry parsetab[] =
 {
@@ -357,7 +400,6 @@ static struct ptentry parsetab[] =
     {"down",     down,         0},
     {"left",     left,         0},
     {"right",    right,        0},
-    {"python",   python,       0},
     {"exit",     shell_quit,   0},
     {"?",        help},
     {NULL, unknown}

@@ -62,6 +62,8 @@
 #include "task.h"
 #include "semphr.h"
 
+#include "serial.h"
+
 /* uIP includes. */
 #include "net/uip.h"
 
@@ -196,10 +198,12 @@ long x;
 	/* Wait until the second transmission of the last packet has completed. */
 	for( x = 0; x < emacTX_WAIT_ATTEMPTS; x++ )
 	{
-		if( ( xTxDescriptors[ 1 ].status & ACT ) != 0 )
+		if( ( xTxDescriptors[ 0 ].status & ACT ) != 0 )
 		{
+		    debugf("wating for tx descriptor %x\r\n", xTxDescriptors[ 0 ].status );
+
 			/* Descriptor is still active. */
-			vTaskDelay( emacTX_WAIT_DELAY_ms );
+			vTaskDelay( emacTX_WAIT_DELAY_ms * 10 );
 		}
 		else
 		{
@@ -208,7 +212,7 @@ long x;
 	}
 	
 	/* Is the descriptor free after waiting for it? */
-	if( ( xTxDescriptors[ 1 ].status & ACT ) != 0 )
+	if( ( xTxDescriptors[ 0 ].status & ACT ) != 0 )
 	{
 		/* Something has gone wrong. */
 		prvResetEverything();
@@ -227,42 +231,71 @@ long x;
 	/* Clear previous settings and go. */
 	xTxDescriptors[0].status &= ~( FP1 | FP0 );
 	xTxDescriptors[0].status |= ( FP1 | FP0 | ACT );
-	xTxDescriptors[1].status &= ~( FP1 | FP0 );
-	xTxDescriptors[1].status |= ( FP1 | FP0 | ACT );
+//	xTxDescriptors[1].status &= ~( FP1 | FP0 );
+//	xTxDescriptors[1].status |= ( FP1 | FP0 | ACT );
 
 	EDMAC.EDTRR.LONG = 0x00000001;
 }
 /*-----------------------------------------------------------*/
 
-unsigned long ulEMACRead( void )
+unsigned long ulEMACRead2( void )
 {
-unsigned long ulBytesReceived;
+    unsigned long ulBytesReceived = prvCheckRxFifoStatus();
 
-	ulBytesReceived = prvCheckRxFifoStatus();
+    if( ulBytesReceived > 0 )
+    {
+	void * fresh_buf = prvGetNextBuffer();
+	uip_buf = ( void * ) pxCurrentRxDesc->buf_p;
+	    
+//	debugf("rx %d\r\n", ulBytesReceived);
 
-	if( ulBytesReceived > 0 )
+	pxCurrentRxDesc->buf_p = fresh_buf;
+	pxCurrentRxDesc->status &= ~( FP1 | FP0 );
+	pxCurrentRxDesc->status |= ACT;			
+
+	if( EDMAC.EDRRR.LONG == 0x00000000L )
 	{
-		pxCurrentRxDesc->status &= ~( FP1 | FP0 );
-		pxCurrentRxDesc->status |= ACT;			
-
-		if( EDMAC.EDRRR.LONG == 0x00000000L )
-		{
-			/* Restart Ethernet if it has stopped */
-			EDMAC.EDRRR.LONG = 0x00000001L;
-		}
-
-		/* Mark the pxDescriptor buffer as free as uip_buf is going to be set to
-		the buffer that contains the received data. */
-		prvReturnBuffer( uip_buf );
-		
-		uip_buf = ( void * ) pxCurrentRxDesc->buf_p;
-
-		/* Move onto the next buffer in the ring. */
-		pxCurrentRxDesc = pxCurrentRxDesc->next;
+	    /* Restart Ethernet if it has stopped */
+	    EDMAC.EDRRR.LONG = 0x00000001L;
 	}
 
-	return ulBytesReceived;
+	/* Move onto the next buffer in the ring. */
+	pxCurrentRxDesc = pxCurrentRxDesc->next;
+    }
+
+    return ulBytesReceived;
 }
+
+ unsigned long ulEMACRead( void )
+ {
+    unsigned long ulBytesReceived = prvCheckRxFifoStatus();
+ 
+    if( ulBytesReceived > 0 )
+    {
+               pxCurrentRxDesc->status &= ~( FP1 | FP0 );
+               pxCurrentRxDesc->status |= ACT;                 
+
+               if( EDMAC.EDRRR.LONG == 0x00000000L )
+               {
+                       /* Restart Ethernet if it has stopped */
+                       EDMAC.EDRRR.LONG = 0x00000001L;
+               }
+//       debugf("rx %d\r\n", ulBytesReceived);
+ 
+               /* Mark the pxDescriptor buffer as free as uip_buf is going to be set to
+               the buffer that contains the received data. */
+               prvReturnBuffer( uip_buf );
+               
+               uip_buf = ( void * ) pxCurrentRxDesc->buf_p;
+ 
+               /* Move onto the next buffer in the ring. */
+               pxCurrentRxDesc = pxCurrentRxDesc->next;
+        }
+ 
+       return ulBytesReceived;
+ }
+
+
 /*-----------------------------------------------------------*/
 
 long lEMACWaitForLink( void )
@@ -349,7 +382,7 @@ long x;
 	pxDescriptor->next = ( struct Descriptor * ) &xRxDescriptors[ 0 ];
 	
 	/* Initialise the Tx descriptors. */
-	for( x = 0; x < emacNUM_TX_BUFFERS; x++ )
+	for( x = 0; x < 1;x++) //emacNUM_TX_BUFFERS; x++ )
 	{
 		pxDescriptor = &( xTxDescriptors[ x ] );
 		
@@ -388,6 +421,7 @@ unsigned long ulAttempts = 0;
 			{
 				ucBufferInUse[ x ] = pdTRUE;
 				pucReturn = ( unsigned char * ) &( xEthernetBuffers[ x ][ 0 ] );
+//				debugf("assigned %d\r\n", x);
 				break;
 			}
 		}
@@ -396,6 +430,8 @@ unsigned long ulAttempts = 0;
 		if( pucReturn == NULL )
 		{
 			ulAttempts++;
+
+//			debugf("wating for buffer %d\r\n", ulAttempts);
 
 			if( ulAttempts >= emacBUFFER_WAIT_ATTEMPTS )
 			{
@@ -420,6 +456,7 @@ unsigned long ul;
 	{
 		if( &( xEthernetBuffers[ ul ][ 0 ] ) == ( void * ) pucBuffer )
 		{
+//			debugf("returned %d\r\n", ul);
 			ucBufferInUse[ ul ] = pdFALSE;
 			break;
 		}
@@ -431,6 +468,7 @@ static void prvResetEverything( void )
 {
 	/* Temporary code just to see if this gets called.  This function has not
 	been implemented. */
+    debugf("GIVING UP\r\n");
 	portDISABLE_INTERRUPTS();
 	for( ;; );
 }

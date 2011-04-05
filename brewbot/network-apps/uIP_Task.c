@@ -70,7 +70,7 @@
 #include "network-apps/ftpd.h"
 #include "network-apps/socket_io.h"
 
-#include "lcd.h"
+#include "serial.h"
 
 /*-----------------------------------------------------------*/
 
@@ -160,8 +160,6 @@ struct timer periodic_timer, arp_timer;
 		/* Is there received data ready to be processed? */
 		uip_len = ( unsigned short ) ulEMACRead();
 
-//		printf("EMACS %d", uip_len);
-		
 		if( ( uip_len > 0 ) && ( uip_buf != NULL ) )
 		{
 			/* Standard uIP loop taken from the uIP manual. */
@@ -175,7 +173,6 @@ struct timer periodic_timer, arp_timer;
 				uip_len is set to a value > 0. */
 				if( uip_len > 0 )
 				{
-				    printf("%ld tx %d\r\n", xTaskGetTickCount(), uip_len);
 					uip_arp_out();
 					vEMACWrite();
 				}
@@ -210,7 +207,6 @@ struct timer periodic_timer, arp_timer;
 				uip_len is set to a value > 0. */
 				if( uip_len > 0 )
 				{
-				    printf("%ld re tx %d\r\n", xTaskGetTickCount(), uip_len);
 					uip_arp_out();
 					vEMACWrite();
 				}
@@ -238,12 +234,10 @@ struct timer periodic_timer, arp_timer;
 		    {
 			if (item.uip_conn != NULL)
 			{
-			    printf("tx %d\n", item.uip_conn);
 			    uip_conn = item.uip_conn;
 			    uip_process(UIP_POLL_REQUEST);
 			    if( uip_len > 0 )
 			    {
-				printf("%ld ff tx %d\r\n", xTaskGetTickCount(), uip_len);
 				uip_arp_out();
 				vEMACWrite();
 			    }
@@ -252,6 +246,19 @@ struct timer periodic_timer, arp_timer;
 		}
 	}
 }
+
+int uIP_request_poll(struct uip_conn *uip_conn)
+{
+    struct uIP_message item;
+    item.uip_conn = uip_conn;
+    if (pdTRUE != xQueueSend( xEMACQueue, &item, 200000))
+    {
+	debugf("Req poll timeout\r\n");
+	return -1;
+    }
+    return 0;
+}
+
 /*-----------------------------------------------------------*/
 
 static void prvSetMACAddress( void )

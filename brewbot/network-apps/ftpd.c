@@ -62,6 +62,8 @@
 #include "fatfs/ff.h"
 #include "lcd.h"
 
+#include "serial.h"
+
 #define PRINT(x)
 #define PRINTLN(x)
 #define PRINTNUMLN(x)
@@ -206,6 +208,8 @@ struct ftpd_state {
     unsigned char ftpMode;
     unsigned char ftpType;
     unsigned char ftpStru;
+    struct uip_conn *master_con;
+    struct uip_conn *data_con;
 };
 
 static FIL file;
@@ -225,6 +229,8 @@ void ftpd_init_data(void)
 
 void ftpd_appcall(void)
 {
+    debugf("AAA FTPD %x\r\n", uip_flags);
+
     if(uip_aborted()) {
 	_abort();
     }
@@ -317,6 +323,9 @@ static void _newdata(void)
     char msg[40];
     //PRINT("Newdata_Handler:\n");
     if (ftps->Status != FTPDSTS_WAITFORCMD) return;
+
+    ftps->master_con = uip_conn;
+
     SplitCmdArg((char*)uip_appdata,&cmd,&arg);
     PRINTLN(cmd);
     PRINTLN(arg);
@@ -359,12 +368,19 @@ static void _newdata(void)
     else if (!strcmp(cmd,cmd_list_P) || !strcmp(cmd,cmd_nlst_P)) {
 	prep_response(ftps, "150 opening data connection list answer.\r\n", FTPDREC_LIST, FTPDANS_LIST, FTPDSTS_SENDING_CTLANS);
 	ftps->IsCmdWD = TRUE;
+	exchgParams.Status   = FTPDSTS_PREP_FTPDATA;
+	exchgParams.RecvCmd  = ftps->RecvCmd;
+	exchgParams.AnsToCmd = ftps->AnsToCmd;
+	uIP_request_poll(exchgParams.data_con);
     }
     else if (!strcmp(cmd,cmd_retr_P)) {
 	if (f_open(&file, arg, FA_READ) == FR_OK)
 	{
 	    prep_response(ftps, "150 opening data connection for retr answer.\r\n", FTPDREC_RETR, FTPDANS_RETR, FTPDSTS_SENDING_CTLANS);
 	    ftps->IsCmdWD = TRUE;
+	    exchgParams.Status   = FTPDSTS_PREP_FTPDATA;
+	    exchgParams.RecvCmd  = ftps->RecvCmd;
+	    exchgParams.AnsToCmd = ftps->AnsToCmd;
 	}
 	else
 	{
@@ -376,6 +392,10 @@ static void _newdata(void)
 	{
 	    prep_response(ftps, "150 opening data connection for stor.\r\n", FTPDREC_STOR, FTPDANS_STOR, FTPDSTS_SENDING_CTLANS);
 	    ftps->IsCmdWD = TRUE;
+	    exchgParams.Status   = FTPDSTS_PREP_FTPDATA;
+	    exchgParams.RecvCmd  = ftps->RecvCmd;
+	    exchgParams.AnsToCmd = ftps->AnsToCmd;
+
 	}
 	else
 	{
@@ -434,6 +454,7 @@ static void _poll(void)
 {
     struct ftpd_state *ftps = (struct ftpd_state *)(&uip_conn->appstate);
     if (ftps->IsCmdWD ) {
+	debugf("poll status=%d AnsToCmd=%d\r\n",  exchgParams.Status, ftps->AnsToCmd);
 	if (exchgParams.Status == FTPDSTS_SENT_FTPDATA) {
 	    ftps->Status = exchgParams.Status;
 	    switch (ftps->AnsToCmd) {
@@ -447,6 +468,7 @@ static void _poll(void)
 		ftps->IsCmdWD = FALSE;
 		exchgParams.Status = FTPDSTS_NONE;
 		ftps->Status = FTPDSTS_SENDING_ENDDATACTLANS;
+		debugf("done\r\n");
 		break;
 	    default: break;
 	    }
@@ -473,9 +495,6 @@ static void _ack(void)
 	case FTPDANS_STOR:
 	    ftps->Status = FTPDSTS_PREP_FTPDATA;
 	    uip_len = 0;
-	    exchgParams.Status   = ftps->Status;
-	    exchgParams.RecvCmd  = ftps->RecvCmd;
-	    exchgParams.AnsToCmd = ftps->AnsToCmd;
 	    break;
 	default :
 	    ftps->Status   = FTPDSTS_WAITFORCMD;
@@ -508,6 +527,7 @@ static void _ack(void)
 	uip_len = ((ftps->count > uip_mss()) ? uip_mss() : ftps->count);
 	strncpy((char*) (uip_appdata),(char*)(okCode200),uip_len);
 	}*/
+    _poll();
 }
 
 static void _senddata(void)
@@ -560,14 +580,17 @@ static void generate_file_list()
     DIR dir;
     FILINFO fno;
     char *fn;
-
+    FRESULT result;
 #if _USE_LFN
     static char lfn[_MAX_LFN + 1];
     fno.lfname = lfn;
     fno.lfsize = sizeof(lfn);
 #endif
 
-    FRESULT result = f_opendir (&dir, "");
+    debugf("list dir\r\n");
+
+    result = f_opendir (&dir, "");
+
     if (result != FR_OK)
     {
 	uip_len = sprintf((char *)uip_appdata, "Failed opendir %d\r\n", result);
@@ -608,7 +631,12 @@ static void generate_file_list()
 
     if (uip_len == 0)
     {
-	uip_len = sprintf((char *)uip_appdata, "Empty\r\n");
+	struct ftpd_state *ftps = (struct ftpd_state *)(&uip_conn->appstate);
+	uip_close();
+	ftps->Status = FTPDSTS_SENT_FTPDATA;
+	exchgParams.Status = ftps->Status;
+	debugf("sending poll\r\n");
+	uIP_request_poll(exchgParams.master_con);
     }
 }
 
@@ -643,6 +671,9 @@ static void _close_data(void)
     switch (ftps->Status) {
     case FTPDSTS_PREP_FTPDATA:
     case FTPDSTS_RECV_DATA:
+
+	debugf("close\r\n");
+
 	f_close(&file);
 	ftps->Status = FTPDSTS_SENT_FTPDATA;
 	exchgParams.Status = ftps->Status;
@@ -661,6 +692,7 @@ static void _connect_data(void)
 	ftps->Status = exchgParams.Status;
 	ftps->RecvCmd = exchgParams.RecvCmd;
     }
+    exchgParams.data_con = uip_conn;
 }
 
 // test testt test
@@ -689,6 +721,8 @@ static void _retrasmit_data(void)
 static void _poll_data(void)
 {
     struct ftpd_state *ftps = (struct ftpd_state *)(&uip_conn->appstate);
+
+    debugf("poll\r\n");
 
     if (ftps->Status == FTPDSTS_NONE) {
 	if (exchgParams.Status == FTPDSTS_PREP_FTPDATA) {
@@ -732,6 +766,10 @@ static void _newdata_data(void)
 	}
     }
 
+
+    debugf("new data %d status %d\r\n", uip_len, ftps->Status);
+
+
     UINT written;
     switch (ftps->Status) {
     case FTPDSTS_PREP_FTPDATA:
@@ -757,8 +795,10 @@ static void _ack_data(void)
 	    uip_close();
 	    ftps->Status = FTPDSTS_SENT_FTPDATA;
 	    exchgParams.Status = ftps->Status;
+	    uIP_request_poll(exchgParams.master_con);
 	    break;
 	case FTPDREC_RETR:
+	    debugf("ack, left %d\r\n", ftps->count);
 	    if (!ftps->count) {
 		f_close(&file);
 		uip_close();
@@ -788,6 +828,7 @@ static void _senddata_data(void)
 
 void ftpd_appcall_data(void)
 {
+    debugf("FTPD %x\r\n", uip_flags);
     if(uip_aborted()) {
 	_abort_data();
     }
@@ -795,6 +836,7 @@ void ftpd_appcall_data(void)
 	_timeout_data();
     }
     if(uip_connected()) {
+	debugf("connected\r\n");
 	_connect_data();
     }
     if(uip_acked()) {
@@ -803,7 +845,7 @@ void ftpd_appcall_data(void)
     if(uip_newdata()) {
 	_newdata_data();
     }
-    if(uip_poll()) {
+    if(uip_poll() || uip_connected()) {
 	_poll_data();
     }
     if(uip_rexmit()) {

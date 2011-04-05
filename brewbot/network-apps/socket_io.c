@@ -18,12 +18,12 @@
 #include "task.h"
 #include "semphr.h"
 
-#include "webserver.h"
+#include "telnetd.h"
 
 #include "lcd.h"
 #include "serial.h"
 
-extern xQueueHandle xEMACQueue;
+extern int uIP_request_poll(struct uip_conn *uip_conn);
 
 int sock_read(struct socket_state *ss, void *buf, size_t count)
 {
@@ -49,8 +49,6 @@ int sock_read(struct socket_state *ss, void *buf, size_t count)
 
 int sock_flush(struct socket_state *ss)
 {
-    struct uIP_message item;
-
     // bail if nothing to flush
     if (ss->tx_count == 0)
 	return 0;
@@ -58,12 +56,7 @@ int sock_flush(struct socket_state *ss)
     debugf("flush %d\r\n", ss->tx_count);
 
     ss->txing = 1;
-    item.uip_conn = ss->uip_conn;
-    if (pdTRUE != xQueueSend( xEMACQueue, &item, 200000))
-    {
-	debugf("Overflow sock TX\r\n");
-	return -1;
-    }
+    uIP_request_poll(ss->uip_conn);
 
     debugf("flushed %d\r\n", 0); //ss->uip_conn);
 
@@ -183,7 +176,7 @@ void socket_appcall(void)
 {
     struct socket_state *ss = (&uip_conn->appstate.socket_state);
 
-    debugf("%ld appcall %x\r\n", xTaskGetTickCount(), uip_flags); 
+//    debugf("%ld appcall %x\r\n", xTaskGetTickCount(), uip_flags); 
 
   if (uip_connected())
   {

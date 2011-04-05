@@ -35,7 +35,6 @@
 #ifndef __WEBSERVER_H__
 #define __WEBSERVER_H__
 
-#include "network-apps/telnetd.h"
 #include "apps/httpd/httpd.h"
 
 void uip_tcp_appcall(void);
@@ -71,7 +70,6 @@ struct socket_state
 union _app_state
 {
     struct socket_state  socket_state;
-    struct telnetd_state telnetd_appstate;
     struct httpd_state   httpd_appstate;
 };
 

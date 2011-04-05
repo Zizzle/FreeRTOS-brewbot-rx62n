@@ -15,6 +15,9 @@
 
 #include "pm.h"
 
+#include "fatfs/ff.h"
+#include <stdlib.h>
+#include <stdio.h>
 
 extern unsigned char usrlib_img[];
 
@@ -30,3 +33,4 @@ int py_main(void)
     retval = pm_run((uint8_t *)"main");
     return (int)retval;
 }
+

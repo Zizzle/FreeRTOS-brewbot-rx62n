@@ -36,24 +36,20 @@
 #define __TELNETD_H__
 
 #include "net/uipopt.h"
+#include "webserver.h"
 
 void telnetd_appcall(void);
 
-#ifndef TELNETD_CONF_LINELEN
 #define TELNETD_CONF_LINELEN 40
-#endif
-#ifndef TELNETD_CONF_NUMLINES
-#define TELNETD_CONF_NUMLINES 36
-#endif
 
-struct telnetd_state {
-  char *lines[TELNETD_CONF_NUMLINES];
+struct telnetd_state
+{
   char buf[TELNETD_CONF_LINELEN];
   char bufptr;
-  u8_t numsent;
   u8_t state;
 };
 
 void telnetd_init(void);
+void telnetd_new_connection(struct socket_state *ss);
 
 #endif /* __TELNETD_H__ */

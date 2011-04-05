@@ -54,7 +54,7 @@ void spi_open()
     
     /* Initialize SPI (per flowchart in hardware manual) */
     RSPI0.SPPCR.BYTE = 0x00;  // No loopback, CMOS output
-    RSPI0.SPBR.BYTE  = 0x05;  // Full speed
+    RSPI0.SPBR.BYTE  = 0x00;  // Full speed
     RSPI0.SPDCR.BYTE = 0x00;  // 16-bit data 1 frame 1 chip select
     RSPI0.SPCKD.BYTE = 0x00;  // 2 clock delay before next access to SPI device
     RSPI0.SSLND.BYTE = 0x00;  // 2 clock delay after de-asserting SSL

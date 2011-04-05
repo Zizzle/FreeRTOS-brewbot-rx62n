@@ -73,8 +73,8 @@ xQueueHandle rx_queue;
 struct rx_item 
 {
     struct socket_state *ss;
-    void    *data;
-    int      data_len;
+    const void          *data;
+    int                  data_len;
 };
 
 /*---------------------------------------------------------------------------*/
@@ -124,6 +124,7 @@ static void sendopt(struct socket_state *ss, u8_t option, u8_t value)
 void shell_prompt(struct socket_state *ss, char *str)
 {
     sendline(ss, str);
+    sock_flush(ss);
 }
 /*---------------------------------------------------------------------------*/
 void shell_output(struct socket_state *ss, char *str1, char *str2)
@@ -135,7 +136,7 @@ void shell_output(struct socket_state *ss, char *str1, char *str2)
     sendline(ss, nl);
 }
 
-void new_data(struct socket_state *ss, char *dataptr, uint16_t len)
+void new_data(struct socket_state *ss, const char *dataptr, uint16_t len)
 {
     struct telnetd_state *s = ss->user_state;
     u8_t c;
@@ -219,7 +220,7 @@ static void telnet_mainloop(void *pvParameters )
 	{
 	    debugf("RX %d\n", item.data_len);
 	    new_data(item.ss, item.data, item.data_len);
-	    if (item.data) free(item.data);
+	    if (item.data) free((void *)item.data);
 	}
     }
 }
@@ -254,7 +255,7 @@ static void telnet_send_message(struct socket_state *ss, const void *data, int l
 }
 
 /*---------------------------------------------------------------------------*/
-
+// Reminder: this method cannot block or call socket_write
 void telnetd_recv_callback(struct socket_state *ss)
 {
     void *data = malloc(uip_datalen());
@@ -263,7 +264,7 @@ void telnetd_recv_callback(struct socket_state *ss)
 }
 
 /*---------------------------------------------------------------------------*/
-
+// Reminder: this method cannot block or call socket_write
 void telnetd_new_connection(struct socket_state *ss)
 {
     struct telnetd_state *s = malloc(sizeof(struct telnetd_state));

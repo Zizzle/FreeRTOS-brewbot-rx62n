@@ -67,10 +67,14 @@ void serial_write(const char *buf, int len)
 
 void debugf(const char *fmt, ...)
 {
+    int len;
     char message[81];
     va_list ap;
+
+    len = snprintf(message, sizeof(message), "%d ", xTaskGetTickCount());
+
     va_start(ap, fmt);
-    int len = vsnprintf(message, sizeof(message) - 1, fmt, ap);
+    len += vsnprintf(message + len, sizeof(message) - len, fmt, ap);
     va_end(ap);
 
     serial_write(message, len);

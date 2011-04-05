@@ -71,9 +71,7 @@ CFILES_ENET = \
 	brewbot/settings.c \
 	brewbot/recipes.c \
 	brewbot/main-full.c \
-	pymite-09/src/platform/rx/main.c \
 	pymite-09/src/platform/rx/main_nat.c \
-	pymite-09/src/platform/rx/main_img.c \
 	pymite-09/src/platform/rx/plat.c
 
 CFILES = \
