@@ -52,6 +52,22 @@ enum SockStatus
 
 #define SOCKET_RECV_BUFF_SIZE 2048
 
+struct ftpd_state
+{
+    int count;
+    int pos;
+    char IsCmdWD;    
+    unsigned char Status;
+    unsigned char RecvCmd;
+    unsigned char AnsToCmd;
+    unsigned char ftpMode;
+    unsigned char ftpType;
+    unsigned char ftpStru;
+    struct uip_conn *uip_conn;
+    struct ftpd_state *other;
+    char cwd[128];
+};
+
 struct socket_state
 {
     struct uip_conn	*uip_conn;
@@ -71,6 +87,7 @@ union _app_state
 {
     struct socket_state  socket_state;
     struct httpd_state   httpd_appstate;
+    struct ftpd_state    ftpd_state;
 };
 
 typedef union _app_state uip_tcp_appstate_t;

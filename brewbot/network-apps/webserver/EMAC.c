@@ -195,6 +195,8 @@ void vEMACWrite( void )
 {
 long x;
 
+debugf("EMAC %d\r\n", uip_len);
+
 	/* Wait until the second transmission of the last packet has completed. */
 	for( x = 0; x < emacTX_WAIT_ATTEMPTS; x++ )
 	{
