@@ -219,4 +219,6 @@ PmReturn_t string_printFormattedBytes(uint8_t *pb,
                                       uint16_t n);
 #endif /* HAVE_STRING_FORMAT */
 
+PmReturn_t string_slice(pPmString_t pstr, int a, int b, pPmObj_t *r_pstring);
+
 #endif /* __STRING_H__ */

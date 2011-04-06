@@ -563,6 +563,42 @@ interpret(const uint8_t returnOnNoThreads)
                     break;
                 }
                 continue;
+	    case SLICE_1:
+		if (OBJ_GET_TYPE(TOS1) == OBJ_TYPE_STR)
+		{
+		    PmString_t *str = (PmString_t *) TOS1;
+		    int a = ((pPmInt_t)TOS)->val;
+		    PM_SP -= 1;
+		    retval = string_slice(str, a, str->length, &pobj2);
+		    PM_BREAK_IF_ERROR(retval);
+		    TOS = pobj2;
+		}
+		continue;
+
+     	    case SLICE_2:
+		if (OBJ_GET_TYPE(TOS1) == OBJ_TYPE_STR)
+		{
+		    PmString_t *str = (PmString_t *) TOS1;
+		    int b = ((pPmInt_t)TOS)->val;
+		    PM_SP -= 1;
+		    retval = string_slice(str, 0, b, &pobj2);
+		    PM_BREAK_IF_ERROR(retval);
+		    TOS = pobj2;
+		}
+		continue;
+
+	    case SLICE_3:
+		if (OBJ_GET_TYPE(TOS2) == OBJ_TYPE_STR)
+		{
+		    PmString_t *str = (PmString_t *) TOS2;
+		    int a = ((pPmInt_t)TOS1)->val;
+		    int b = ((pPmInt_t)TOS)->val;
+		    PM_SP -= 2;
+		    retval = string_slice(str, a, b, &pobj2);
+		    PM_BREAK_IF_ERROR(retval);
+		    TOS = pobj2;
+		}
+		continue;
 
             case STORE_SUBSCR:
                 /* Implements TOS1[TOS] = TOS2 */

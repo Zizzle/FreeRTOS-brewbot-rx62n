@@ -543,3 +543,28 @@ string_format(pPmString_t pstr, pPmObj_t parg, pPmObj_t *r_pstring)
     return PM_RET_OK;
 }
 #endif /* HAVE_STRING_FORMAT */
+
+
+PmReturn_t
+string_slice(pPmString_t pstr, int a, int b, pPmObj_t *r_pstring)
+{
+    PmReturn_t retval;
+    if (a < 0) a = pstr->length + a;
+    if (b < 0) b = pstr->length + b;
+    if (a < 0) a = 0;
+    if (b < 0) b = 0;
+    if (a > pstr->length) a = pstr->length;
+    if (b > pstr->length) b = pstr->length;
+
+    if (a > b || a > pstr->length)
+    {
+	uint8_t *chars = (uint8_t *)"";
+	retval = string_newWithLen(&chars, 0, r_pstring);   
+    }
+    else
+    {
+	uint8_t *chars = pstr->val + a;
+	retval = string_newWithLen(&chars, b-a, r_pstring);
+    }
+    return retval;
+}
